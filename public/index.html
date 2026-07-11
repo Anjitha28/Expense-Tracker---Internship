@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURA – Smart Personal Expense Tracker</title>
+  <meta name="description" content="AURA is a professional personal finance manager for tracking income, expenses, and savings with beautiful analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ================================================== -->
+  <!-- AUTHENTICATION CONTAINER                           -->
+  <!-- ================================================== -->
+  <div id="auth-container" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="brand">
+          <span class="material-icons-round brand-icon">account_balance_wallet</span>
+          <h2>AURA</h2>
+        </div>
+        <p id="auth-subtitle">Smart Personal Expense Tracker</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="auth-form">
+        <h3>Welcome Back</h3>
+        <p class="form-helper">Sign in to manage your finances</p>
+        <div class="input-group">
+          <span class="material-icons-round input-icon">email</span>
+          <input type="email" id="login-email" placeholder="Email Address" required autocomplete="email">
+        </div>
+        <div class="input-group">
+          <span class="material-icons-round input-icon">lock</span>
+          <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
+        </div>
+        <div class="form-actions">
+          <a href="#" id="btn-forgot-password" class="forgot-link">Forgot Password?</a>
+        </div>
+        <div id="login-error" class="info-box warning hidden" style="margin-bottom:14px;">
+          <span class="material-icons-round">warning</span>
+          <span id="login-error-msg"></span>
+        </div>
+        <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block">
+          <span>Login</span>
+          <span class="material-icons-round">arrow_forward</span>
+        </button>
+        <p class="auth-switch">Don't have an account? <a href="#" id="link-goto-signup">Sign Up</a></p>
+      </form>
+
+      <!-- Sign Up Form -->
+      <form id="signup-form" class="auth-form hidden">
+        <h3>Create Account</h3>
+        <p class="form-helper">Start your financial journey today</p>
+        <div class="input-group">
+          <span class="material-icons-round input-icon">email</span>
+          <input type="email" id="signup-email" placeholder="Email Address" required autocomplete="email">
+        </div>
+        <div class="input-group">
+          <span class="material-icons-round input-icon">lock</span>
+          <input type="password" id="signup-password" placeholder="Password (min. 8 chars)" required autocomplete="new-password">
+        </div>
+        <div class="input-group">
+          <span class="material-icons-round input-icon">lock_reset</span>
+          <input type="password" id="signup-confirm-password" placeholder="Confirm Password" required autocomplete="new-password">
+        </div>
+        <div id="signup-error" class="info-box warning hidden" style="margin-bottom:14px;">
+          <span class="material-icons-round">warning</span>
+          <span id="signup-error-msg"></span>
+        </div>
+        <button type="submit" id="btn-signup-submit" class="btn btn-primary btn-block">
+          <span>Create Account</span>
+          <span class="material-icons-round">person_add</span>
+        </button>
+        <p class="auth-switch">Already have an account? <a href="#" id="link-goto-login">Login</a></p>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ================================================== -->
+  <!-- MAIN APP CONTAINER                                 -->
+  <!-- ================================================== -->
+  <div id="app-container" class="app-layout hidden">
+
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <span class="material-icons-round brand-icon">account_balance_wallet</span>
+          <h2>AURA</h2>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#dashboard" data-page="dashboard" class="nav-item active">
+          <span class="material-icons-round">dashboard</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="#income" data-page="income" class="nav-item">
+          <span class="material-icons-round income-color">trending_up</span>
+          <span>Income</span>
+        </a>
+        <a href="#expense" data-page="expense" class="nav-item">
+          <span class="material-icons-round expense-color">trending_down</span>
+          <span>Expense</span>
+        </a>
+        <a href="#balance" data-page="balance" class="nav-item">
+          <span class="material-icons-round balance-color">account_balance</span>
+          <span>Balance</span>
+        </a>
+        <a href="#reports" data-page="reports" class="nav-item">
+          <span class="material-icons-round">bar_chart</span>
+          <span>Reports</span>
+        </a>
+        <a href="#transactions" data-page="transactions" class="nav-item">
+          <span class="material-icons-round">list_alt</span>
+          <span>Transactions</span>
+        </a>
+        <a href="#recurring" data-page="recurring" class="nav-item">
+          <span class="material-icons-round">repeat</span>
+          <span>Recurring</span>
+        </a>
+        <a href="#settings" data-page="settings" class="nav-item">
+          <span class="material-icons-round">settings</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar" id="sidebar-avatar">U</div>
+          <div class="user-info">
+            <span class="user-email" id="sidebar-email">user@example.com</span>
+            <span class="user-status">Premium Client</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-logout-sidebar">
+          <span class="material-icons-round">logout</span>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-workspace">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-title">
+          <h1 id="page-title">Dashboard</h1>
+          <p id="page-subtitle" class="text-secondary">Track, analyze, and optimize your wealth</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="btn-theme-toggle" class="icon-btn" title="Toggle Theme">
+            <span class="material-icons-round">dark_mode</span>
+          </button>
+          <div class="user-avatar-topbar" id="topbar-avatar">U</div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="page-content">
+
+        <!-- ===== 1. DASHBOARD PAGE ===== -->
+        <section id="page-dashboard" class="page-section">
+          <!-- Summary Cards -->
+          <div class="metrics-grid">
+            <div class="metric-card card-income" id="card-goto-income" style="cursor:pointer">
+              <div class="metric-details">
+                <span class="text-secondary uppercase tracking">Total Income</span>
+                <h2 id="dash-total-income" class="metric-amount income-color">₹0.00</h2>
+              </div>
+              <div class="metric-icon bg-income-light">
+                <span class="material-icons-round income-color">trending_up</span>
+              </div>
+            </div>
+            <div class="metric-card card-expense" id="card-goto-expense" style="cursor:pointer">
+              <div class="metric-details">
+                <span class="text-secondary uppercase tracking">Total Expense</span>
+                <h2 id="dash-total-expense" class="metric-amount expense-color">₹0.00</h2>
+              </div>
+              <div class="metric-icon bg-expense-light">
+                <span class="material-icons-round expense-color">trending_down</span>
+              </div>
+            </div>
+            <div class="metric-card card-balance" id="card-goto-balance" style="cursor:pointer">
+              <div class="metric-details">
+                <span class="text-secondary uppercase tracking">Current Balance</span>
+                <h2 id="dash-current-balance" class="metric-amount balance-color">₹0.00</h2>
+              </div>
+              <div class="metric-icon bg-balance-light">
+                <span class="material-icons-round balance-color">account_balance</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Add Shortcuts -->
+          <div class="quick-actions-bar card">
+            <div class="quick-title-group">
+              <span class="material-icons-round">bolt</span>
+              <h4>Quick Add Shortcuts</h4>
+            </div>
+            <div class="shortcuts-row">
+              <button class="shortcut-btn" data-type="expense" data-category="Food" data-amount="150" data-notes="Quick Food purchase">
+                <span class="material-icons-round text-red">restaurant</span> 🍔 Food
+              </button>
+              <button class="shortcut-btn" data-type="expense" data-category="Food" data-amount="80" data-notes="Coffee break">
+                <span class="material-icons-round text-orange">coffee</span> ☕ Coffee
+              </button>
+              <button class="shortcut-btn" data-type="expense" data-category="Shopping" data-amount="500" data-notes="Quick Shopping">
+                <span class="material-icons-round text-purple">shopping_bag</span> 🛒 Shopping
+              </button>
+              <button class="shortcut-btn" data-type="expense" data-category="Transport" data-amount="200" data-notes="Taxi fare">
+                <span class="material-icons-round text-blue">directions_car</span> 🚕 Transport
+              </button>
+              <button class="shortcut-btn" data-type="income" data-category="Salary" data-amount="50000" data-notes="Monthly Salary">
+                <span class="material-icons-round text-green">payments</span> 💰 Salary
+              </button>
+            </div>
+          </div>
+
+          <!-- Charts -->
+          <div class="charts-grid">
+            <div class="card chart-card">
+              <div class="card-header">
+                <h3>Income vs Expense</h3>
+                <span class="text-secondary text-sm">Monthly Trend</span>
+              </div>
+              <div class="chart-container" id="chart-dash-trends"></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-header">
+                <h3>Expense Breakdown</h3>
+                <span class="text-secondary text-sm">Category Share</span>
+              </div>
+              <div class="chart-container" id="chart-dash-pie"></div>
+            </div>
+          </div>
+
+          <!-- Recent Transactions -->
+          <div class="card list-card">
+            <div class="card-header flex-row justify-between align-center">
+              <h3>Recent Transactions</h3>
+              <button class="btn-text" id="link-view-all-txns">View All →</button>
+            </div>
+            <div class="table-container">
+              <table class="txn-table">
+                <thead>
+                  <tr>
+                    <th>Transaction</th>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Payment Mode</th>
+                    <th class="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="dash-recent-txns">
+                  <tr><td colspan="6" class="text-center text-secondary">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 2. INCOME PAGE ===== -->
+        <section id="page-income" class="page-section hidden">
+          <div class="flex-row justify-between align-center flex-wrap gap-4" style="margin-bottom:0">
+            <div>
+              <h3 style="font-family:var(--font-heading);font-size:18px;font-weight:700;">Income Analytics</h3>
+              <p class="text-secondary text-sm">Visualize and track your financial cash inflows</p>
+            </div>
+            <button id="btn-page-add-income" class="btn btn-success">
+              <span class="material-icons-round">add</span>
+              <span>Add Income</span>
+            </button>
+          </div>
+          <!-- Income Summaries -->
+          <div class="period-metrics-grid">
+            <div class="period-card card-income-border">
+              <span class="period-label">Today</span>
+              <h3 id="inc-today" class="period-amount income-color">₹0.00</h3>
+            </div>
+            <div class="period-card card-income-border">
+              <span class="period-label">This Week</span>
+              <h3 id="inc-week" class="period-amount income-color">₹0.00</h3>
+            </div>
+            <div class="period-card card-income-border">
+              <span class="period-label">This Month</span>
+              <h3 id="inc-month" class="period-amount income-color">₹0.00</h3>
+            </div>
+            <div class="period-card card-income-border">
+              <span class="period-label">This Year</span>
+              <h3 id="inc-year" class="period-amount income-color">₹0.00</h3>
+            </div>
+          </div>
+          <!-- Income Chart -->
+          <div class="card chart-card full-width">
+            <div class="card-header flex-row justify-between align-center">
+              <h3>Income Flow Trend</h3>
+              <div class="tabs" id="income-chart-tabs">
+                <button class="tab-btn" data-chart="daily">Daily</button>
+                <button class="tab-btn active" data-chart="monthly">Monthly</button>
+                <button class="tab-btn" data-chart="yearly">Yearly</button>
+              </div>
+            </div>
+            <div class="chart-container" id="chart-income-trends"></div>
+          </div>
+          <!-- Analysis -->
+          <div class="analytics-grid">
+            <div class="card">
+              <div class="card-header"><h3>Category Analysis</h3></div>
+              <div class="analysis-list" id="income-category-analysis"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Subcategory Analysis</h3></div>
+              <div class="analysis-list" id="income-subcategory-analysis"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Payment Mode Analysis</h3></div>
+              <div class="analysis-list" id="income-payment-analysis"></div>
+            </div>
+          </div>
+          <!-- Recent + Insights -->
+          <div class="charts-grid">
+            <div class="card flex-2">
+              <div class="card-header"><h3>Recent Income Transactions</h3></div>
+              <div class="table-container">
+                <table class="txn-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th><th>Category</th><th>Payment Mode</th><th>Notes</th><th class="text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody id="income-recent-list"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card flex-1 card-gradient-green">
+              <div class="card-header border-none">
+                <span class="material-icons-round text-3xl">lightbulb</span>
+                <h3>Income Insights</h3>
+              </div>
+              <div class="insights-body" id="income-insights"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 3. EXPENSE PAGE ===== -->
+        <section id="page-expense" class="page-section hidden">
+          <div class="flex-row justify-between align-center flex-wrap gap-4" style="margin-bottom:0">
+            <div>
+              <h3 style="font-family:var(--font-heading);font-size:18px;font-weight:700;">Expense Analytics</h3>
+              <p class="text-secondary text-sm">Monitor and control your commercial outflows</p>
+            </div>
+            <button id="btn-page-add-expense" class="btn btn-danger">
+              <span class="material-icons-round">add</span>
+              <span>Add Expense</span>
+            </button>
+          </div>
+          <!-- Expense Summaries -->
+          <div class="period-metrics-grid">
+            <div class="period-card card-expense-border">
+              <span class="period-label">Today</span>
+              <h3 id="exp-today" class="period-amount expense-color">₹0.00</h3>
+            </div>
+            <div class="period-card card-expense-border">
+              <span class="period-label">This Week</span>
+              <h3 id="exp-week" class="period-amount expense-color">₹0.00</h3>
+            </div>
+            <div class="period-card card-expense-border">
+              <span class="period-label">This Month</span>
+              <h3 id="exp-month" class="period-amount expense-color">₹0.00</h3>
+            </div>
+            <div class="period-card card-expense-border">
+              <span class="period-label">This Year</span>
+              <h3 id="exp-year" class="period-amount expense-color">₹0.00</h3>
+            </div>
+          </div>
+          <!-- Expense Chart -->
+          <div class="card chart-card full-width">
+            <div class="card-header flex-row justify-between align-center">
+              <h3>Expense Flow Trend</h3>
+              <div class="tabs" id="expense-chart-tabs">
+                <button class="tab-btn" data-chart="daily">Daily</button>
+                <button class="tab-btn active" data-chart="monthly">Monthly</button>
+                <button class="tab-btn" data-chart="yearly">Yearly</button>
+              </div>
+            </div>
+            <div class="chart-container" id="chart-expense-trends"></div>
+          </div>
+          <!-- Analysis -->
+          <div class="analytics-grid">
+            <div class="card">
+              <div class="card-header"><h3>Category Analysis</h3></div>
+              <div class="analysis-list" id="expense-category-analysis"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Subcategory Analysis</h3></div>
+              <div class="analysis-list" id="expense-subcategory-analysis"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Payment Mode Analysis</h3></div>
+              <div class="analysis-list" id="expense-payment-analysis"></div>
+            </div>
+          </div>
+          <!-- Recent + Insights -->
+          <div class="charts-grid">
+            <div class="card flex-2">
+              <div class="card-header"><h3>Recent Expense Transactions</h3></div>
+              <div class="table-container">
+                <table class="txn-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th><th>Category</th><th>Payment Mode</th><th>Notes</th><th class="text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody id="expense-recent-list"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card flex-1 card-gradient-red">
+              <div class="card-header border-none">
+                <span class="material-icons-round text-3xl">lightbulb</span>
+                <h3>Expense Insights</h3>
+              </div>
+              <div class="insights-body" id="expense-insights"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 4. BALANCE PAGE ===== -->
+        <section id="page-balance" class="page-section hidden">
+          <div class="balance-grid">
+            <div class="card balance-health-card">
+              <div class="card-header border-none" style="padding-bottom:0;border-bottom:none;margin-bottom:0">
+                <span class="text-secondary text-sm uppercase tracking">Net Capital</span>
+                <span class="chip chip-income" id="bal-health-badge">Good</span>
+              </div>
+              <div class="big-balance-display">
+                <h1 id="bal-net-worth" class="balance-color">₹0.00</h1>
+                <p id="bal-health-status" class="health-positive income-color">Excellent financial standing</p>
+              </div>
+              <div class="health-meta">
+                <span class="material-icons-round balance-color">health_and_safety</span>
+                <span id="bal-health-card-desc">You have saved 35% of your income this month. Keep it up!</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Financial Summary</h3></div>
+              <div class="summary-details">
+                <div class="summary-row">
+                  <span>Total Income</span>
+                  <strong id="bal-income-sum" class="income-color">₹0.00</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Total Expense</span>
+                  <strong id="bal-expense-sum" class="expense-color">₹0.00</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Net Savings</span>
+                  <strong id="bal-savings-sum" class="balance-color">₹0.00</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Savings Ratio</span>
+                  <strong id="bal-savings-ratio">0%</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="charts-grid">
+            <div class="card chart-card flex-2">
+              <div class="card-header">
+                <h3>Balance Trend History</h3>
+                <span class="text-secondary text-sm">Monthly Net Accumulation</span>
+              </div>
+              <div class="chart-container" id="chart-balance-history"></div>
+            </div>
+            <div class="card chart-card flex-1 flex-col align-center">
+              <div class="card-header align-self-start border-none" style="width:100%">
+                <h3>Savings Progress</h3>
+                <span class="text-secondary text-sm">Goal Target</span>
+              </div>
+              <div class="chart-container radial-center" id="chart-balance-radial"></div>
+            </div>
+          </div>
+          <!-- Balance History Ledger -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Historical Account Balance Ledger</h3>
+            </div>
+            <div class="table-container">
+              <table class="txn-table">
+                <thead>
+                  <tr>
+                    <th>Month Period</th>
+                    <th>Income</th>
+                    <th>Expenses</th>
+                    <th>Net Saved</th>
+                    <th class="text-right">Running Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="balance-history-ledger"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 5. REPORTS PAGE ===== -->
+        <section id="page-reports" class="page-section hidden">
+          <div class="reports-header-card card">
+            <div class="reports-control">
+              <div class="reports-type-selectors">
+                <button class="btn btn-outline report-period-btn active" data-period="daily">Daily Report</button>
+                <button class="btn btn-outline report-period-btn" data-period="weekly">Weekly Report</button>
+                <button class="btn btn-outline report-period-btn" data-period="monthly">Monthly Report</button>
+                <button class="btn btn-outline report-period-btn" data-period="yearly">Yearly Report</button>
+              </div>
+              <div class="reports-actions">
+                <button class="btn btn-outline" id="btn-export-pdf" title="Export as PDF">
+                  <span class="material-icons-round">picture_as_pdf</span>
+                  <span>Export PDF</span>
+                </button>
+                <button class="btn btn-outline" id="btn-export-excel" title="Export as Excel">
+                  <span class="material-icons-round">table_chart</span>
+                  <span>Export Excel</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="metrics-grid">
+            <div class="metric-card border-left-green">
+              <div class="metric-details">
+                <span class="text-secondary text-sm uppercase">Period Income</span>
+                <h3 id="rep-income" class="income-color" style="font-family:var(--font-heading);font-size:24px;font-weight:800;margin-top:6px;">₹0.00</h3>
+              </div>
+            </div>
+            <div class="metric-card border-left-red">
+              <div class="metric-details">
+                <span class="text-secondary text-sm uppercase">Period Expenses</span>
+                <h3 id="rep-expense" class="expense-color" style="font-family:var(--font-heading);font-size:24px;font-weight:800;margin-top:6px;">₹0.00</h3>
+              </div>
+            </div>
+            <div class="metric-card border-left-blue">
+              <div class="metric-details">
+                <span class="text-secondary text-sm uppercase">Net Savings</span>
+                <h3 id="rep-savings" class="balance-color" style="font-family:var(--font-heading);font-size:24px;font-weight:800;margin-top:6px;">₹0.00</h3>
+              </div>
+            </div>
+          </div>
+          <div class="charts-grid">
+            <div class="card chart-card">
+              <div class="card-header border-none">
+                <h3>Period Comparison</h3>
+                <span class="text-secondary text-sm">Income vs Expense</span>
+              </div>
+              <div class="chart-container" id="chart-reports-comparison"></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-header border-none">
+                <h3>Category Share</h3>
+                <span class="text-secondary text-sm">Top spend categories</span>
+              </div>
+              <div class="chart-container" id="chart-reports-pie"></div>
+            </div>
+          </div>
+          <!-- Report Transactions List -->
+          <div class="card">
+            <div class="card-header flex-row justify-between align-center">
+              <h3 id="rep-txns-title">Period Transactions</h3>
+              <span id="rep-txns-count" class="text-secondary text-sm">0 records</span>
+            </div>
+            <div class="table-container">
+              <table class="txn-table">
+                <thead>
+                  <tr>
+                    <th>Type</th><th>Date</th><th>Category</th><th>Payment Mode</th><th>Notes</th><th class="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="rep-txns-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 6. TRANSACTIONS PAGE ===== -->
+        <section id="page-transactions" class="page-section hidden">
+          <!-- Filter Bar -->
+          <div class="card">
+            <div class="flex-row justify-between align-center flex-wrap gap-4">
+              <div class="search-filter-group" style="flex:1;min-width:200px;max-width:340px">
+                <span class="material-icons-round filter-icon">search</span>
+                <input type="text" id="txns-search" placeholder="Search transactions...">
+              </div>
+              <div class="flex-row gap-2 flex-wrap align-center">
+                <select id="filter-type" class="form-group custom-select" style="width:130px;">
+                  <option value="all">All Types</option>
+                  <option value="income">Income</option>
+                  <option value="expense">Expense</option>
+                </select>
+                <select id="filter-category" class="custom-select" style="width:160px;">
+                  <option value="all">All Categories</option>
+                </select>
+                <select id="filter-payment" class="custom-select" style="width:155px;">
+                  <option value="all">All Payments</option>
+                </select>
+                <button id="btn-txns-clear-filters" class="btn btn-outline" style="padding:9px 14px;font-size:13px;">
+                  <span class="material-icons-round" style="font-size:16px!important">clear</span>
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Transactions List -->
+          <div class="card">
+            <div class="card-header flex-row justify-between align-center">
+              <h3>All Financial Transactions</h3>
+              <span id="txns-count" class="text-secondary text-sm">Showing 0 records</span>
+            </div>
+            <div class="table-container">
+              <table class="txn-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Payment Mode</th>
+                    <th>Notes</th>
+                    <th class="text-right">Amount</th>
+                    <th class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="txns-table-body"></tbody>
+              </table>
+            </div>
+            <div class="view-all-container">
+              <button id="btn-txns-load-more" class="btn btn-outline">
+                <span>Load More Transactions</span>
+                <span class="material-icons-round">expand_more</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 7. RECURRING TRANSACTIONS PAGE ===== -->
+        <section id="page-recurring" class="page-section hidden">
+          <div class="flex-row justify-between align-center flex-wrap gap-4" style="margin-bottom:0">
+            <div>
+              <h3 style="font-family:var(--font-heading);font-size:18px;font-weight:700;">Recurring Transactions</h3>
+              <p class="text-secondary text-sm">Manage scheduled income and expense entries</p>
+            </div>
+            <button id="btn-add-recurring" class="btn btn-primary">
+              <span class="material-icons-round">add</span>
+              <span>Add Recurring</span>
+            </button>
+          </div>
+          <!-- Info box -->
+          <div class="info-box info">
+            <span class="material-icons-round">info</span>
+            <span>Recurring transactions help you track regular payments like salary, rent, subscriptions, and utilities. They serve as reminders and can be manually confirmed each period.</span>
+          </div>
+          <!-- Recurring List -->
+          <div class="card">
+            <div class="card-header flex-row justify-between align-center">
+              <h3>Active Recurring Entries</h3>
+              <span id="recurring-count" class="chip chip-income">0 active</span>
+            </div>
+            <div id="recurring-list-container" class="recurring-grid">
+              <p class="text-secondary text-sm">No recurring transactions yet. Add one to get started.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 8. SETTINGS PAGE ===== -->
+        <section id="page-settings" class="page-section hidden">
+          <div class="settings-layout">
+            <div class="card settings-tabs-card">
+              <div class="settings-nav">
+                <button class="settings-nav-btn active" data-tab="profile">
+                  <span class="material-icons-round">person</span> Profile
+                </button>
+                <button class="settings-nav-btn" data-tab="theme">
+                  <span class="material-icons-round">palette</span> Theme
+                </button>
+                <button class="settings-nav-btn" data-tab="notifications">
+                  <span class="material-icons-round">notifications</span> Notifications
+                </button>
+                <button class="settings-nav-btn" data-tab="categories">
+                  <span class="material-icons-round">category</span> Categories
+                </button>
+                <button class="settings-nav-btn" data-tab="payments">
+                  <span class="material-icons-round">credit_card</span> Payment Modes
+                </button>
+                <button class="settings-nav-btn" data-tab="backup">
+                  <span class="material-icons-round">cloud_sync</span> Backup & Restore
+                </button>
+                <button class="settings-nav-btn text-danger-color" id="btn-settings-logout">
+                  <span class="material-icons-round">logout</span> Logout
+                </button>
+              </div>
+            </div>
+
+            <div class="card settings-content-card">
+              <!-- Profile Tab -->
+              <div id="settings-tab-profile" class="settings-tab-pane">
+                <h3 style="font-family:var(--font-heading);font-size:17px;font-weight:700;">My Profile</h3>
+                <p class="text-secondary text-sm">Your account information and credentials</p>
+                <form id="settings-profile-form" class="mt-6" style="display:flex;flex-direction:column;gap:16px">
+                  <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="profile-email" readonly class="input-disabled">
+                    <small class="text-secondary text-xs">Email is your unique User ID and cannot be changed.</small>
+                  </div>
+                  <div class="form-group">
+                    <label>Member Since</label>
+                    <input type="text" id="profile-joined" readonly class="input-disabled">
+                  </div>
+                  <div class="form-group">
+                    <label>Currency</label>
+                    <select id="pref-currency">
+                      <option value="INR">₹ INR – Indian Rupee</option>
+                      <option value="USD">$ USD – US Dollar</option>
+                      <option value="EUR">€ EUR – Euro</option>
+                      <option value="GBP">£ GBP – British Pound</option>
+                    </select>
+                  </div>
+                  <button type="submit" class="btn btn-primary" style="align-self:flex-start">
+                    <span class="material-icons-round">save</span>
+                    Save Preferences
+                  </button>
+                </form>
+              </div>
+
+              <!-- Theme Tab -->
+              <div id="settings-tab-theme" class="settings-tab-pane hidden">
+                <h3 style="font-family:var(--font-heading);font-size:17px;font-weight:700;">Interface Appearance</h3>
+                <p class="text-secondary text-sm">Choose how the application looks and feels</p>
+                <div class="theme-picker-row mt-6">
+                  <button class="theme-option-btn active" id="theme-btn-light">
+                    <span class="material-icons-round text-3xl">light_mode</span>
+                    <strong>Light Theme</strong>
+                    <span class="text-xs text-secondary">Standard clear mode</span>
+                  </button>
+                  <button class="theme-option-btn" id="theme-btn-dark">
+                    <span class="material-icons-round text-3xl">dark_mode</span>
+                    <strong>Dark Theme</strong>
+                    <span class="text-xs text-secondary">Premium midnight mode</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Notifications Tab -->
+              <div id="settings-tab-notifications" class="settings-tab-pane hidden">
+                <h3 style="font-family:var(--font-heading);font-size:17px;font-weight:700;">Notification Settings</h3>
+                <p class="text-secondary text-sm">Control alerts and financial reminders</p>
+                <div class="toggle-list mt-6" style="display:flex;flex-direction:column;gap:16px">
+                  <div class="toggle-item">
+                    <div class="toggle-details">
+                      <strong>Monthly Financial Digests</strong>
+                      <span class="text-secondary text-xs">Receive detailed reports on savings at month-end</span>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="settings-notif-digest" checked>
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                  <div class="toggle-item">
+                    <div class="toggle-details">
+                      <strong>Over-Budget Alerts</strong>
+                      <span class="text-secondary text-xs">Alert me if monthly expenses cross 80% of income</span>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="settings-notif-budget" checked>
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                  <div class="toggle-item">
+                    <div class="toggle-details">
+                      <strong>Recurring Transaction Reminders</strong>
+                      <span class="text-secondary text-xs">Notify me when a recurring entry is due</span>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="settings-notif-recurring" checked>
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Categories Tab -->
+              <div id="settings-tab-categories" class="settings-tab-pane hidden">
+                <div class="flex-row justify-between align-center">
+                  <div>
+                    <h3 style="font-family:var(--font-heading);font-size:17px;font-weight:700;">Categories Manager</h3>
+                    <p class="text-secondary text-sm">Create and organize custom expense & income tags</p>
+                  </div>
+                  <button class="btn btn-outline" id="btn-add-custom-category">
+                    <span class="material-icons-round">add</span>
+                    <span>Add Category</span>
+                  </button>
+                </div>
+                <div class="categories-list-grid mt-6">
+                  <div class="cat-section">
+                    <h4>Income Tags</h4>
+                    <div class="tag-flex" id="settings-income-categories-list"></div>
+                  </div>
+                  <div class="cat-section mt-6">
+                    <h4>Expense Tags</h4>
+                    <div class="tag-flex" id="settings-expense-categories-list"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Modes Tab -->
+              <div id="settings-tab-payments" class="settings-tab-pane hidden">
+                <div class="flex-row justify-between align-center">
+                  <div>
+                    <h3 style="font-family:var(--font-heading);font-size:17px;font-weight:700;">Payment Methods</h3>
+                    <p class="text-secondary text-sm">Manage bank accounts, wallets, and cards</p>
+                  </div>
+                  <button class="btn btn-outline" id="btn-add-custom-payment">
+                    <span class="material-icons-round">add</span>
+                    <span>Add Mode</span>
+                  </button>
+                </div>
+                <div class="payment-modes-list tag-flex mt-6" id="settings-payment-modes-list"></div>
+              </div>
+
+              <!-- Backup Tab -->
+              <div id="settings-tab-backup" class="settings-tab-pane hidden">
+                <h3 style="font-family:var(--font-heading);font-size:17px;font-weight:700;">Backup & Restore</h3>
+                <p class="text-secondary text-sm">Download or restore your financial data archive</p>
+                <div class="backup-actions-grid mt-6">
+                  <div class="backup-card">
+                    <span class="material-icons-round text-3xl text-blue">cloud_download</span>
+                    <h4>Export Backup</h4>
+                    <p class="text-secondary">Download a secure JSON archive of all your transactions and preferences.</p>
+                    <button class="btn btn-outline mt-4" id="btn-export-json">
+                      <span class="material-icons-round">download</span> Download JSON
+                    </button>
+                  </div>
+                  <div class="backup-card">
+                    <span class="material-icons-round text-3xl text-purple">cloud_upload</span>
+                    <h4>Import Backup</h4>
+                    <p class="text-secondary">Restore a previously exported backup file. Warning: overrides current data.</p>
+                    <input type="file" id="import-file-input" class="hidden" accept=".json">
+                    <button class="btn btn-outline mt-4" id="btn-trigger-import">
+                      <span class="material-icons-round">upload</span> Select JSON File
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+
+  <!-- ================================================== -->
+  <!-- ADD TRANSACTION MODAL                              -->
+  <!-- ================================================== -->
+  <div id="transaction-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-txn-title">New Transaction</h3>
+        <button id="btn-close-txn-modal" class="modal-close-btn">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+
+      <!-- Step 1: Type Selection -->
+      <div id="txn-step-1" class="modal-step-content">
+        <p class="modal-subtitle">What would you like to add?</p>
+        <div class="type-selector-grid">
+          <button id="btn-select-income-type" class="type-select-card type-income">
+            <span class="material-icons-round income-color text-3xl">trending_up</span>
+            <span class="type-title">Income</span>
+            <span class="type-desc">Salary, freelance, investments, gifts & more</span>
+          </button>
+          <button id="btn-select-expense-type" class="type-select-card type-expense">
+            <span class="material-icons-round expense-color text-3xl">trending_down</span>
+            <span class="type-title">Expense</span>
+            <span class="type-desc">Food, rent, bills, shopping, travel & more</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Transaction Form -->
+      <form id="txn-step-2-form" class="modal-step-content hidden" style="display:none">
+        <input type="hidden" id="txn-edit-id" value="">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="txn-date">Date <span class="required">*</span></label>
+            <input type="date" id="txn-date" required>
+          </div>
+          <div class="form-group">
+            <label for="txn-amount">Amount <span class="required">*</span></label>
+            <div class="input-amount-wrapper">
+              <span class="amount-symbol" id="modal-currency-symbol">₹</span>
+              <input type="number" id="txn-amount" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row-2 mt-4">
+          <div class="form-group">
+            <label for="txn-category">Category <span class="required">*</span></label>
+            <select id="txn-category" required>
+              <option value="" disabled selected>Select Category</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="txn-subcategory">Subcategory</label>
+            <select id="txn-subcategory">
+              <option value="">Select Subcategory (Optional)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2 mt-4">
+          <div class="form-group">
+            <label for="txn-payment-mode">Payment Mode <span class="required">*</span></label>
+            <select id="txn-payment-mode" required>
+              <option value="" disabled selected>Select Mode</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="txn-receipt">Receipt Image</label>
+            <div class="custom-file-upload">
+              <input type="file" id="txn-receipt" accept="image/*">
+              <label for="txn-receipt" class="file-upload-label">
+                <span class="material-icons-round">cloud_upload</span>
+                <span id="receipt-file-name" class="text-xs">Upload Receipt (Optional)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group mt-4">
+          <label for="txn-notes">Notes / Description</label>
+          <textarea id="txn-notes" rows="3" placeholder="Add description, location, or other details..."></textarea>
+        </div>
+
+        <!-- Smart Suggestions -->
+        <div id="smart-suggestions-box" class="hidden mt-4">
+          <p class="text-secondary text-xs font-semibold" style="margin-bottom:8px;">
+            <span class="material-icons-round" style="font-size:14px!important;vertical-align:middle;">auto_awesome</span>
+            Smart Suggestions
+          </p>
+          <div id="smart-suggestions-list" class="suggestions-list"></div>
+        </div>
+
+        <div class="modal-footer mt-4" style="padding-top:16px;border-top:1px solid var(--divider)">
+          <button type="button" id="btn-back-txn-modal" class="btn btn-secondary">
+            <span class="material-icons-round">arrow_back</span> Back
+          </button>
+          <div class="footer-actions-right">
+            <button type="button" id="btn-cancel-txn-modal" class="btn btn-outline">Cancel</button>
+            <button type="submit" id="btn-save-txn" class="btn btn-primary">
+              <span class="material-icons-round">save</span> Save Transaction
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ================================================== -->
+  <!-- ADD RECURRING TRANSACTION MODAL                    -->
+  <!-- ================================================== -->
+  <div id="recurring-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-recurring-title">Add Recurring Transaction</h3>
+        <button id="btn-close-recurring-modal" class="modal-close-btn">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <form id="recurring-form" class="modal-step-content" style="display:flex;flex-direction:column;gap:16px">
+        <input type="hidden" id="recurring-edit-id" value="">
+        <!-- Type toggle -->
+        <div class="form-group">
+          <label>Transaction Type <span class="required">*</span></label>
+          <div class="flex-row gap-2">
+            <button type="button" class="btn btn-outline recurring-type-btn active" data-val="income" style="flex:1;justify-content:center">
+              <span class="material-icons-round income-color">trending_up</span> Income
+            </button>
+            <button type="button" class="btn btn-outline recurring-type-btn" data-val="expense" style="flex:1;justify-content:center">
+              <span class="material-icons-round expense-color">trending_down</span> Expense
+            </button>
+          </div>
+          <input type="hidden" id="recurring-type" value="income">
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="recurring-amount">Amount <span class="required">*</span></label>
+            <div class="input-amount-wrapper">
+              <span class="amount-symbol">₹</span>
+              <input type="number" id="recurring-amount" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="recurring-frequency">Frequency <span class="required">*</span></label>
+            <select id="recurring-frequency" required>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly" selected>Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="recurring-category">Category <span class="required">*</span></label>
+            <select id="recurring-category" required>
+              <option value="" disabled selected>Select Category</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="recurring-payment">Payment Mode <span class="required">*</span></label>
+            <select id="recurring-payment" required>
+              <option value="" disabled selected>Select Mode</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="recurring-start">Start Date</label>
+            <input type="date" id="recurring-start">
+          </div>
+          <div class="form-group">
+            <label for="recurring-end">End Date (Optional)</label>
+            <input type="date" id="recurring-end">
+          </div>
+        </div>
+        <div class="modal-footer" style="padding-top:16px;border-top:1px solid var(--divider)">
+          <button type="button" id="btn-cancel-recurring-modal" class="btn btn-outline">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons-round">save</span> Save Recurring
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ================================================== -->
+  <!-- ADD CATEGORY MODAL                                 -->
+  <!-- ================================================== -->
+  <div id="category-modal" class="modal-overlay hidden">
+    <div class="modal-card sm">
+      <div class="modal-header">
+        <h3>Add Custom Category</h3>
+        <button id="btn-close-cat-modal" class="modal-close-btn"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="cat-create-form" class="modal-step-content" style="display:flex;flex-direction:column;gap:14px">
+        <div class="form-group">
+          <label for="cat-name">Category Name</label>
+          <input type="text" id="cat-name" placeholder="e.g. Subscriptions, Groceries" required>
+        </div>
+        <div class="form-group">
+          <label for="cat-type">Category Type</label>
+          <select id="cat-type" required>
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cat-icon">Icon</label>
+          <select id="cat-icon">
+            <option value="star">⭐ Star</option>
+            <option value="restaurant">🍽️ Food</option>
+            <option value="directions_car">🚗 Car</option>
+            <option value="shopping_bag">🛍️ Bag</option>
+            <option value="home">🏠 Home</option>
+            <option value="receipt_long">🧾 Bill</option>
+            <option value="payments">💵 Cash</option>
+            <option value="work">💼 Briefcase</option>
+            <option value="medical_services">⚕️ Medical</option>
+            <option value="school">🎓 Education</option>
+            <option value="flight">✈️ Travel</option>
+            <option value="sports_esports">🎮 Entertainment</option>
+          </select>
+        </div>
+        <div class="modal-footer" style="padding-top:0;border-top:none">
+          <button type="button" id="btn-cancel-cat-modal" class="btn btn-outline">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons-round">add</span> Create Category
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================================================== -->
+  <!-- ADD PAYMENT MODE MODAL                             -->
+  <!-- ================================================== -->
+  <div id="payment-modal" class="modal-overlay hidden">
+    <div class="modal-card sm">
+      <div class="modal-header">
+        <h3>Add Payment Method</h3>
+        <button id="btn-close-pay-modal" class="modal-close-btn"><span class="material-icons-round">close</span></button>
+      </div>
+      <form id="pay-create-form" class="modal-step-content" style="display:flex;flex-direction:column;gap:14px">
+        <div class="form-group">
+          <label for="pay-name">Method Name</label>
+          <input type="text" id="pay-name" placeholder="e.g. Paytm, PhonePe, HDFC Card" required>
+        </div>
+        <div class="modal-footer" style="padding-top:0;border-top:none">
+          <button type="button" id="btn-cancel-pay-modal" class="btn btn-outline">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons-round">add</span> Create Method
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ================================================== -->
+  <!-- FLOATING "+" BUTTON                               -->
+  <!-- ================================================== -->
+  <button id="btn-floating-add" class="floating-add-btn hidden" title="Add Transaction">
+    <span class="material-icons-round">add</span>
+  </button>
+
+  <!-- ================================================== -->
+  <!-- MOBILE BOTTOM NAV                                  -->
+  <!-- ================================================== -->
+  <nav id="mobile-navigation" class="mobile-nav hidden">
+    <a href="#dashboard" data-page="dashboard" class="mobile-nav-item active">
+      <span class="material-icons-round">dashboard</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="#transactions" data-page="transactions" class="mobile-nav-item">
+      <span class="material-icons-round">list_alt</span>
+      <span>Txns</span>
+    </a>
+    <div class="mobile-nav-spacer"></div>
+    <a href="#reports" data-page="reports" class="mobile-nav-item">
+      <span class="material-icons-round">bar_chart</span>
+      <span>Reports</span>
+    </a>
+    <a href="#settings" data-page="settings" class="mobile-nav-item">
+      <span class="material-icons-round">settings</span>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <!-- ================================================== -->
+  <!-- TOAST NOTIFICATIONS                                -->
+  <!-- ================================================== -->
+  <div id="toast-container" class="toast-wrapper"></div>
+
+  
+</body>
+</html>
