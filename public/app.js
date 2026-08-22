@@ -8,12 +8,23 @@
 // ==========================================================================
 // APPLICATION STATE
 // ==========================================================================
+function safeParse(key, defaultVal) {
+  try {
+    const val = localStorage.getItem(key);
+    if (!val || val === 'undefined') return defaultVal;
+    return JSON.parse(val) || defaultVal;
+  } catch (e) {
+    localStorage.removeItem(key);
+    return defaultVal;
+  }
+}
+
 const state = {
   token: localStorage.getItem('aura_token') || null,
-  user: JSON.parse(localStorage.getItem('aura_user') || 'null'),
-  preferences: JSON.parse(localStorage.getItem('aura_prefs') || 'null') || {
+  user: safeParse('aura_user', null),
+  preferences: safeParse('aura_prefs', {
     theme: 'light', currency: 'INR', notifications_enabled: true
-  },
+  }),
   categories: [],
   subcategories: [],
   paymentModes: [],
@@ -36,7 +47,7 @@ const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
 // ==========================================================================
 // API BASE & FETCH WRAPPER
 // ==========================================================================
-const API_BASE = '';   // Same origin – Express serves both front & API
+const API_BASE = window.location.port === '5000' || window.location.hostname.includes('vercel') ? '' : 'http://localhost:5000';
 
 async function apiFetch(url, options = {}) {
   const headers = {
@@ -273,8 +284,8 @@ async function savePreferences(newPrefs) {
 // ==========================================================================
 function setupAllEventListeners() {
   // ── Auth navigation ──
-  document.getElementById('link-goto-signup').addEventListener('click', e => { e.preventDefault(); navigateTo('signup'); });
-  document.getElementById('link-goto-login').addEventListener('click',  e => { e.preventDefault(); navigateTo('login');  });
+  document.getElementById('link-goto-signup')?.addEventListener('click', e => { e.preventDefault(); navigateTo('signup'); });
+  document.getElementById('link-goto-login')?.addEventListener('click',  e => { e.preventDefault(); navigateTo('login');  });
 
   // ── Login ──
   document.getElementById('login-form').addEventListener('submit', async e => {
@@ -291,7 +302,7 @@ function setupAllEventListeners() {
     setLoading(btn, true);
     try {
       const data = await apiFetch('/api/auth/login', { method: 'POST', body: { email, password } });
-      handleAuthSuccess(data);
+      await handleAuthSuccess(data);
     } catch (err) {
       showFormError('login', err.message);
     } finally {
@@ -315,9 +326,10 @@ function setupAllEventListeners() {
     const btn = document.getElementById('btn-signup-submit');
     setLoading(btn, true);
     try {
-      const data = await apiFetch('/api/auth/register', { method: 'POST', body: { email, password, confirmPassword: confirm } });
-      handleAuthSuccess(data);
-      showToast('Account created! Welcome to AURA 🎉', 'success');
+      await apiFetch('/api/auth/register', { method: 'POST', body: { email, password, confirmPassword: confirm } });
+      showToast('Account created! Please log in.', 'success');
+      document.getElementById('signup-form').reset();
+      navigateTo('login');
     } catch (err) {
       showFormError('signup', err.message);
     } finally {

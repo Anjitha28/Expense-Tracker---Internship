@@ -1,81 +1,74 @@
-const { Pool } = require('pg');
+const sqlite3 = require('sqlite3');
+const { open } = require('sqlite');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-const dbUser = process.env.DB_USER || 'postgres';
-const dbPassword = process.env.DB_PASSWORD || 'postgres';
-const dbHost = process.env.DB_HOST || 'localhost';
-const dbPort = process.env.DB_PORT || 5432;
-const dbName = process.env.DB_DATABASE || 'expense_tracker';
-
-let pool;
+let db;
 
 async function initDB() {
-  // Step 1: Connect to default 'postgres' database to ensure our database exists
-  const tempPool = new Pool({
-    user: dbUser,
-    password: dbPassword,
-    host: dbHost,
-    port: dbPort,
-    database: 'postgres'
-  });
-
   try {
-    const res = await tempPool.query('SELECT 1 FROM pg_database WHERE datname = $1', [dbName]);
-    if (res.rowCount === 0) {
-      console.log(`Database "${dbName}" does not exist. Creating...`);
-      await tempPool.query(`CREATE DATABASE "${dbName}"`);
-      console.log(`Database "${dbName}" created successfully.`);
-    }
-  } catch (err) {
-    console.error('Error checking/creating database:', err.message);
-    console.log('Please make sure PostgreSQL is running and credentials in .env are correct.');
-  } finally {
-    await tempPool.end();
-  }
+    db = await open({
+      filename: path.join(__dirname, 'expense_tracker.sqlite'),
+      driver: sqlite3.Database
+    });
 
-  // Step 2: Connect to the target database
-  pool = new Pool({
-    user: dbUser,
-    password: dbPassword,
-    host: dbHost,
-    port: dbPort,
-    database: dbName
-  });
+    console.log('Connected to SQLite database.');
 
-  // Step 3: Run schema setup if tables don't exist
-  try {
-    const tableCheck = await pool.query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'Users'
-      );
+    // Enable foreign keys
+    await db.run('PRAGMA foreign_keys = ON');
+
+    // Run schema setup if tables don't exist
+    const tableCheck = await db.get(`
+      SELECT name FROM sqlite_master 
+      WHERE type='table' AND name='Users';
     `);
     
-    const exists = tableCheck.rows[0].exists;
-    if (!exists) {
+    if (!tableCheck) {
       console.log('Tables do not exist. Initializing database schema...');
       const schemaPath = path.join(__dirname, 'db_schema.sql');
       const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-      await pool.query(schemaSql);
+      
+      // sqlite module exec can run multiple statements separated by ;
+      await db.exec(schemaSql);
       console.log('Database schema initialized and seeded successfully.');
     } else {
       console.log('Database tables already exist. Skipping schema initialization.');
     }
   } catch (err) {
-    console.error('Error initializing tables:', err.message);
+    console.error('Error initializing database:', err.message);
+  }
+}
+
+async function query(text, params = []) {
+  if (!db) {
+    throw new Error('Database not initialized. Call initDB first.');
+  }
+
+  // SQLite arrays for parameters don't like undefined
+  const safeParams = params.map(p => p === undefined ? null : p);
+
+  // Convert Postgres $1, $2, etc. to SQLite ?1, ?2, etc.
+  text = text.replace(/\$(\d+)/g, '?$1');
+
+  // If the query is an INSERT, UPDATE, or DELETE
+  const isWrite = /^\s*(INSERT|UPDATE|DELETE)/i.test(text);
+  if (isWrite) {
+    // For INSERT ... RETURNING, we must use all() to get the rows, and not run()
+    if (/\bRETURNING\b/i.test(text)) {
+      const rows = await db.all(text, safeParams);
+      return { rows, rowCount: rows.length };
+    }
+    const result = await db.run(text, safeParams);
+    return { rowCount: result.changes, lastID: result.lastID };
+  } else {
+    const rows = await db.all(text, safeParams);
+    return { rowCount: rows.length, rows };
   }
 }
 
 module.exports = {
   initDB,
-  query: (text, params) => {
-    if (!pool) {
-      throw new Error('Database pool not initialized. Call initDB first.');
-    }
-    return pool.query(text, params);
-  },
-  getPool: () => pool
+  query,
+  getDb: () => db
 };

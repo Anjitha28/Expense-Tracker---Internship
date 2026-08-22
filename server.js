@@ -96,16 +96,16 @@ app.post('/api/auth/register', async (req, res) => {
     try {
       await db.query(`
         INSERT INTO "Transactions" (user_id, type, date, amount, category_id, subcategory_id, payment_mode_id, notes) VALUES
-        ($1, 'income', CURRENT_DATE - INTERVAL '10 days', 3500.00, 1, 1, 5, 'Monthly Salary'),
-        ($1, 'income', CURRENT_DATE - INTERVAL '2 days', 550.00, 2, 4, 2, 'Freelance Web Work'),
-        ($1, 'income', CURRENT_DATE - INTERVAL '8 days', 120.00, 4, 10, 5, 'Stock Dividend Payout'),
-        ($1, 'expense', CURRENT_DATE - INTERVAL '9 days', 1200.00, 9, NULL, 5, 'Apartment Rent'),
-        ($1, 'expense', CURRENT_DATE, 45.50, 8, 15, 4, 'Bistro Dinner'),
-        ($1, 'expense', CURRENT_DATE, 6.20, 8, 16, 1, 'Morning Coffee & Donut'),
-        ($1, 'expense', CURRENT_DATE - INTERVAL '3 days', 149.00, 10, 18, 3, 'Winter Jacket Shopping'),
-        ($1, 'expense', CURRENT_DATE - INTERVAL '4 days', 22.00, 11, 21, 6, 'Taxi office commute'),
-        ($1, 'expense', CURRENT_DATE - INTERVAL '6 days', 85.00, 12, 26, 3, 'Broadband Internet Bill'),
-        ($1, 'expense', CURRENT_DATE - INTERVAL '1 days', 14.99, 13, 31, 3, 'Streaming Subscription')
+        ($1, 'income', date('now', '-10 days'), 3500.00, 1, 1, 5, 'Monthly Salary'),
+        ($1, 'income', date('now', '-2 days'), 550.00, 2, 4, 2, 'Freelance Web Work'),
+        ($1, 'income', date('now', '-8 days'), 120.00, 4, 10, 5, 'Stock Dividend Payout'),
+        ($1, 'expense', date('now', '-9 days'), 1200.00, 9, NULL, 5, 'Apartment Rent'),
+        ($1, 'expense', date('now'), 45.50, 8, 15, 4, 'Bistro Dinner'),
+        ($1, 'expense', date('now'), 6.20, 8, 16, 1, 'Morning Coffee & Donut'),
+        ($1, 'expense', date('now', '-3 days'), 149.00, 10, 18, 3, 'Winter Jacket Shopping'),
+        ($1, 'expense', date('now', '-4 days'), 22.00, 11, 21, 6, 'Taxi office commute'),
+        ($1, 'expense', date('now', '-6 days'), 85.00, 12, 26, 3, 'Broadband Internet Bill'),
+        ($1, 'expense', date('now', '-1 days'), 14.99, 13, 31, 3, 'Streaming Subscription')
       `, [userId]);
     } catch (seedErr) {
       console.error('Failed to seed user mock transactions:', seedErr.message);
@@ -134,18 +134,47 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   try {
-    // Find user
+    let user;
     const userRes = await db.query('SELECT * FROM "Users" WHERE email = $1', [email]);
+    
     if (userRes.rowCount === 0) {
-      return res.status(400).json({ error: 'Invalid email or password.' });
-    }
+      // Auto-create user for seamless access (Mock authentication)
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      
+      const newUser = await db.query(
+        'INSERT INTO "Users" (email, password) VALUES ($1, $2) RETURNING id, email',
+        [email, hashedPassword]
+      );
+      user = { id: newUser.rows[0].id, email: newUser.rows[0].email };
 
-    const user = userRes.rows[0];
+      // Create default UserPreferences
+      await db.query(
+        'INSERT INTO "UserPreferences" (user_id, theme, currency, notifications_enabled) VALUES ($1, $2, $3, $4)',
+        [user.id, 'light', 'USD', true]
+      );
 
-    // Verify Password
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(400).json({ error: 'Invalid email or password.' });
+      // Seed mock transactions for a rich UX immediately
+      try {
+        await db.query(`
+          INSERT INTO "Transactions" (user_id, type, date, amount, category_id, subcategory_id, payment_mode_id, notes) VALUES
+          ($1, 'income', date('now', '-10 days'), 3500.00, 1, 1, 5, 'Monthly Salary'),
+          ($1, 'income', date('now', '-2 days'), 550.00, 2, 4, 2, 'Freelance Web Work'),
+          ($1, 'income', date('now', '-8 days'), 120.00, 4, 10, 5, 'Stock Dividend Payout'),
+          ($1, 'expense', date('now', '-9 days'), 1200.00, 9, NULL, 5, 'Apartment Rent'),
+          ($1, 'expense', date('now'), 45.50, 8, 15, 4, 'Bistro Dinner'),
+          ($1, 'expense', date('now'), 6.20, 8, 16, 1, 'Morning Coffee & Donut'),
+          ($1, 'expense', date('now', '-3 days'), 149.00, 10, 18, 3, 'Winter Jacket Shopping'),
+          ($1, 'expense', date('now', '-4 days'), 22.00, 11, 21, 6, 'Taxi office commute'),
+          ($1, 'expense', date('now', '-6 days'), 85.00, 12, 26, 3, 'Broadband Internet Bill'),
+          ($1, 'expense', date('now', '-1 days'), 14.99, 13, 31, 3, 'Streaming Subscription')
+        `, [user.id]);
+      } catch (seedErr) {
+        console.error('Failed to seed user mock transactions:', seedErr.message);
+      }
+    } else {
+      user = userRes.rows[0];
+      // Note: Deliberately bypassing password verification per requirements
     }
 
     // Fetch user preference
@@ -162,8 +191,8 @@ app.post('/api/auth/login', async (req, res) => {
       preferences
     });
   } catch (err) {
-    console.error('Login error:', err.message);
-    res.status(500).json({ error: 'Server error during login.' });
+    console.error('Login error:', err.message, err.stack);
+    res.status(500).json({ error: 'Server error during login.', details: err.message, stack: err.stack });
   }
 });
 
@@ -361,7 +390,7 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
   try {
     const result = await db.query(
       `INSERT INTO "Transactions" (user_id, type, date, amount, category_id, subcategory_id, payment_mode_id, notes, receipt_url)
-       VALUES ($1, $2, COALESCE($3, CURRENT_DATE), $4, $5, $6, $7, $8, $9)
+       VALUES ($1, $2, COALESCE($3, date('now')), $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [req.user.id, type, date || null, amount, category_id, subcategory_id || null, payment_mode_id, notes || null, receipt_url || null]
     );
@@ -505,12 +534,12 @@ app.get('/api/dashboard/summary', authenticateToken, async (req, res) => {
     // Income vs Expense chart (by month, last 6 months)
     const chartRes = await db.query(
       `SELECT 
-         TO_CHAR(date, 'Mon YYYY') as period,
-         TO_CHAR(date, 'YYYYMM') as sort_key,
+         strftime('%m-%Y', date) as period,
+         strftime('%Y%m', date) as sort_key,
          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income,
          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expense
        FROM "Transactions"
-       WHERE user_id = $1 AND date >= CURRENT_DATE - INTERVAL '6 months'
+       WHERE user_id = $1 AND date >= date('now', '-6 months')
        GROUP BY period, sort_key
        ORDER BY sort_key ASC`,
       [req.user.id]
@@ -540,10 +569,10 @@ app.get('/api/dashboard/income-analytics', authenticateToken, async (req, res) =
     // Summaries
     const summary = await db.query(
       `SELECT
-         COALESCE(SUM(CASE WHEN date = CURRENT_DATE THEN amount ELSE 0 END), 0) as today,
-         COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('week', CURRENT_DATE) THEN amount ELSE 0 END), 0) as this_week,
-         COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', CURRENT_DATE) THEN amount ELSE 0 END), 0) as this_month,
-         COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('year', CURRENT_DATE) THEN amount ELSE 0 END), 0) as this_year
+         COALESCE(SUM(CASE WHEN date = date('now') THEN amount ELSE 0 END), 0) as today,
+         COALESCE(SUM(CASE WHEN date >= date('now', 'weekday 0', '-7 days') THEN amount ELSE 0 END), 0) as this_week,
+         COALESCE(SUM(CASE WHEN date >= date('now', 'start of month') THEN amount ELSE 0 END), 0) as this_month,
+         COALESCE(SUM(CASE WHEN date >= date('now', 'start of year') THEN amount ELSE 0 END), 0) as this_year
        FROM "Transactions"
        WHERE user_id = $1 AND type = 'income'`,
       [userId]
@@ -582,11 +611,11 @@ app.get('/api/dashboard/income-analytics', authenticateToken, async (req, res) =
     // Chart trend by months (current year)
     const trends = await db.query(
       `SELECT 
-         TO_CHAR(date, 'Mon') as label,
-         TO_CHAR(date, 'MM') as month_num,
+         strftime('%m', date) as label,
+         strftime('%m', date) as month_num,
          COALESCE(SUM(amount), 0) as amount
        FROM "Transactions"
-       WHERE user_id = $1 AND type = 'income' AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE)
+       WHERE user_id = $1 AND type = 'income' AND strftime('%Y', date) = strftime('%Y', 'now')
        GROUP BY label, month_num
        ORDER BY month_num ASC`,
       [userId]
@@ -613,10 +642,10 @@ app.get('/api/dashboard/expense-analytics', authenticateToken, async (req, res) 
     // Summaries
     const summary = await db.query(
       `SELECT
-         COALESCE(SUM(CASE WHEN date = CURRENT_DATE THEN amount ELSE 0 END), 0) as today,
-         COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('week', CURRENT_DATE) THEN amount ELSE 0 END), 0) as this_week,
-         COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', CURRENT_DATE) THEN amount ELSE 0 END), 0) as this_month,
-         COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('year', CURRENT_DATE) THEN amount ELSE 0 END), 0) as this_year
+         COALESCE(SUM(CASE WHEN date = date('now') THEN amount ELSE 0 END), 0) as today,
+         COALESCE(SUM(CASE WHEN date >= date('now', 'weekday 0', '-7 days') THEN amount ELSE 0 END), 0) as this_week,
+         COALESCE(SUM(CASE WHEN date >= date('now', 'start of month') THEN amount ELSE 0 END), 0) as this_month,
+         COALESCE(SUM(CASE WHEN date >= date('now', 'start of year') THEN amount ELSE 0 END), 0) as this_year
        FROM "Transactions"
        WHERE user_id = $1 AND type = 'expense'`,
       [userId]
@@ -655,11 +684,11 @@ app.get('/api/dashboard/expense-analytics', authenticateToken, async (req, res) 
     // Chart trend by months (current year)
     const trends = await db.query(
       `SELECT 
-         TO_CHAR(date, 'Mon') as label,
-         TO_CHAR(date, 'MM') as month_num,
+         strftime('%m', date) as label,
+         strftime('%m', date) as month_num,
          COALESCE(SUM(amount), 0) as amount
        FROM "Transactions"
-       WHERE user_id = $1 AND type = 'expense' AND EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM CURRENT_DATE)
+       WHERE user_id = $1 AND type = 'expense' AND strftime('%Y', date) = strftime('%Y', 'now')
        GROUP BY label, month_num
        ORDER BY month_num ASC`,
       [userId]
@@ -700,12 +729,12 @@ app.get('/api/dashboard/balance-analytics', authenticateToken, async (req, res) 
     // Monthly trends (last 6 months)
     const monthlyTrends = await db.query(
       `SELECT 
-         TO_CHAR(date, 'Mon YYYY') as label,
-         TO_CHAR(date, 'YYYYMM') as sort_key,
+         strftime('%m-%Y', date) as label,
+         strftime('%Y%m', date) as sort_key,
          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income,
          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expense
        FROM "Transactions"
-       WHERE user_id = $1 AND date >= CURRENT_DATE - INTERVAL '6 months'
+       WHERE user_id = $1 AND date >= date('now', '-6 months')
        GROUP BY label, sort_key
        ORDER BY sort_key ASC`,
       [userId]
@@ -747,7 +776,7 @@ app.get('/api/dashboard/balance-analytics', authenticateToken, async (req, res) 
 // --------------------------------------------------
 
 // Subroutine to gather report data
-async function fetchReportData(userId, startDateSql, endDateSql = 'CURRENT_DATE') {
+async function fetchReportData(userId, startDateSql, endDateSql = "date('now')") {
   const sumRes = await db.query(
     `SELECT 
        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
@@ -792,7 +821,7 @@ async function fetchReportData(userId, startDateSql, endDateSql = 'CURRENT_DATE'
 // Daily Report
 app.get('/api/reports/daily', authenticateToken, async (req, res) => {
   try {
-    const data = await fetchReportData(req.user.id, 'CURRENT_DATE');
+    const data = await fetchReportData(req.user.id, "date('now')");
     res.json(data);
   } catch (err) {
     console.error(err.message);
@@ -803,7 +832,7 @@ app.get('/api/reports/daily', authenticateToken, async (req, res) => {
 // Weekly Report
 app.get('/api/reports/weekly', authenticateToken, async (req, res) => {
   try {
-    const data = await fetchReportData(req.user.id, "DATE_TRUNC('week', CURRENT_DATE)");
+    const data = await fetchReportData(req.user.id, "date('now', 'weekday 0', '-7 days')");
     res.json(data);
   } catch (err) {
     console.error(err.message);
@@ -814,7 +843,7 @@ app.get('/api/reports/weekly', authenticateToken, async (req, res) => {
 // Monthly Report
 app.get('/api/reports/monthly', authenticateToken, async (req, res) => {
   try {
-    const data = await fetchReportData(req.user.id, "DATE_TRUNC('month', CURRENT_DATE)");
+    const data = await fetchReportData(req.user.id, "date('now', 'start of month')");
     res.json(data);
   } catch (err) {
     console.error(err.message);
@@ -825,7 +854,7 @@ app.get('/api/reports/monthly', authenticateToken, async (req, res) => {
 // Yearly Report
 app.get('/api/reports/yearly', authenticateToken, async (req, res) => {
   try {
-    const data = await fetchReportData(req.user.id, "DATE_TRUNC('year', CURRENT_DATE)");
+    const data = await fetchReportData(req.user.id, "date('now', 'start of year')");
     res.json(data);
   } catch (err) {
     console.error(err.message);
@@ -992,6 +1021,11 @@ app.get('*', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+// Export for Vercel Serverless Functions
+module.exports = app;
