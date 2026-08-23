@@ -8,12 +8,18 @@ let db;
 
 async function initDB() {
   try {
+    // Vercel serverless functions have a read-only filesystem except for /tmp
+    const isProd = process.env.VERCEL || process.env.NODE_ENV === 'production';
+    const dbPath = isProd 
+      ? path.join('/tmp', 'expense_tracker.sqlite')
+      : path.join(__dirname, 'expense_tracker.sqlite');
+
     db = await open({
-      filename: path.join(__dirname, 'expense_tracker.sqlite'),
+      filename: dbPath,
       driver: sqlite3.Database
     });
 
-    console.log('Connected to SQLite database.');
+    console.log(`Connected to SQLite database at ${dbPath}.`);
 
     // Enable foreign keys
     await db.run('PRAGMA foreign_keys = ON');
