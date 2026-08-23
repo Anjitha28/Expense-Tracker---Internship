@@ -534,12 +534,12 @@ app.get('/api/dashboard/summary', authenticateToken, async (req, res) => {
     // Income vs Expense chart (by month, last 6 months)
     const chartRes = await db.query(
       `SELECT 
-         strftime('%m-%Y', date) as period,
-         strftime('%Y%m', date) as sort_key,
+         TO_CHAR(date, 'MM-YYYY') as period,
+         TO_CHAR(date, 'YYYYMM') as sort_key,
          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income,
          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expense
        FROM "Transactions"
-       WHERE user_id = $1 AND date >= date('now', '-6 months')
+       WHERE user_id = $1 AND date >= CURRENT_DATE - INTERVAL '6 months'
        GROUP BY period, sort_key
        ORDER BY sort_key ASC`,
       [req.user.id]
@@ -569,10 +569,10 @@ app.get('/api/dashboard/income-analytics', authenticateToken, async (req, res) =
     // Summaries
     const summary = await db.query(
       `SELECT
-         COALESCE(SUM(CASE WHEN date = date('now') THEN amount ELSE 0 END), 0) as today,
-         COALESCE(SUM(CASE WHEN date >= date('now', 'weekday 0', '-7 days') THEN amount ELSE 0 END), 0) as this_week,
-         COALESCE(SUM(CASE WHEN date >= date('now', 'start of month') THEN amount ELSE 0 END), 0) as this_month,
-         COALESCE(SUM(CASE WHEN date >= date('now', 'start of year') THEN amount ELSE 0 END), 0) as this_year
+         COALESCE(SUM(CASE WHEN date = CURRENT_DATE THEN amount ELSE 0 END), 0) as today,
+         COALESCE(SUM(CASE WHEN date >= CURRENT_DATE - INTERVAL '7 days' THEN amount ELSE 0 END), 0) as this_week,
+         COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', CURRENT_DATE) THEN amount ELSE 0 END), 0) as this_month,
+         COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('year', CURRENT_DATE) THEN amount ELSE 0 END), 0) as this_year
        FROM "Transactions"
        WHERE user_id = $1 AND type = 'income'`,
       [userId]
@@ -611,11 +611,11 @@ app.get('/api/dashboard/income-analytics', authenticateToken, async (req, res) =
     // Chart trend by months (current year)
     const trends = await db.query(
       `SELECT 
-         strftime('%m', date) as label,
-         strftime('%m', date) as month_num,
+         TO_CHAR(date, 'MM') as label,
+         TO_CHAR(date, 'MM') as month_num,
          COALESCE(SUM(amount), 0) as amount
        FROM "Transactions"
-       WHERE user_id = $1 AND type = 'income' AND strftime('%Y', date) = strftime('%Y', 'now')
+       WHERE user_id = $1 AND type = 'income' AND TO_CHAR(date, 'YYYY') = TO_CHAR(CURRENT_DATE, 'YYYY')
        GROUP BY label, month_num
        ORDER BY month_num ASC`,
       [userId]
@@ -642,10 +642,10 @@ app.get('/api/dashboard/expense-analytics', authenticateToken, async (req, res) 
     // Summaries
     const summary = await db.query(
       `SELECT
-         COALESCE(SUM(CASE WHEN date = date('now') THEN amount ELSE 0 END), 0) as today,
-         COALESCE(SUM(CASE WHEN date >= date('now', 'weekday 0', '-7 days') THEN amount ELSE 0 END), 0) as this_week,
-         COALESCE(SUM(CASE WHEN date >= date('now', 'start of month') THEN amount ELSE 0 END), 0) as this_month,
-         COALESCE(SUM(CASE WHEN date >= date('now', 'start of year') THEN amount ELSE 0 END), 0) as this_year
+         COALESCE(SUM(CASE WHEN date = CURRENT_DATE THEN amount ELSE 0 END), 0) as today,
+         COALESCE(SUM(CASE WHEN date >= CURRENT_DATE - INTERVAL '7 days' THEN amount ELSE 0 END), 0) as this_week,
+         COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', CURRENT_DATE) THEN amount ELSE 0 END), 0) as this_month,
+         COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('year', CURRENT_DATE) THEN amount ELSE 0 END), 0) as this_year
        FROM "Transactions"
        WHERE user_id = $1 AND type = 'expense'`,
       [userId]
@@ -684,11 +684,11 @@ app.get('/api/dashboard/expense-analytics', authenticateToken, async (req, res) 
     // Chart trend by months (current year)
     const trends = await db.query(
       `SELECT 
-         strftime('%m', date) as label,
-         strftime('%m', date) as month_num,
+         TO_CHAR(date, 'MM') as label,
+         TO_CHAR(date, 'MM') as month_num,
          COALESCE(SUM(amount), 0) as amount
        FROM "Transactions"
-       WHERE user_id = $1 AND type = 'expense' AND strftime('%Y', date) = strftime('%Y', 'now')
+       WHERE user_id = $1 AND type = 'expense' AND TO_CHAR(date, 'YYYY') = TO_CHAR(CURRENT_DATE, 'YYYY')
        GROUP BY label, month_num
        ORDER BY month_num ASC`,
       [userId]
@@ -729,12 +729,12 @@ app.get('/api/dashboard/balance-analytics', authenticateToken, async (req, res) 
     // Monthly trends (last 6 months)
     const monthlyTrends = await db.query(
       `SELECT 
-         strftime('%m-%Y', date) as label,
-         strftime('%Y%m', date) as sort_key,
+         TO_CHAR(date, 'MM-YYYY') as label,
+         TO_CHAR(date, 'YYYYMM') as sort_key,
          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income,
          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expense
        FROM "Transactions"
-       WHERE user_id = $1 AND date >= date('now', '-6 months')
+       WHERE user_id = $1 AND date >= CURRENT_DATE - INTERVAL '6 months'
        GROUP BY label, sort_key
        ORDER BY sort_key ASC`,
       [userId]
@@ -776,14 +776,15 @@ app.get('/api/dashboard/balance-analytics', authenticateToken, async (req, res) 
 // --------------------------------------------------
 
 // Subroutine to gather report data
-async function fetchReportData(userId, startDateSql, endDateSql = "date('now')") {
+async function fetchReportData(userId, startDate, endDate = null) {
+  const endParam = endDate || 'CURRENT_DATE';
   const sumRes = await db.query(
     `SELECT 
        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense
      FROM "Transactions" 
-     WHERE user_id = $1 AND date >= ${startDateSql} AND date <= ${endDateSql}`,
-    [userId]
+     WHERE user_id = $1 AND date >= $2 AND date <= ${endParam}`,
+    [userId, startDate]
   );
   
   const transRes = await db.query(
@@ -792,19 +793,19 @@ async function fetchReportData(userId, startDateSql, endDateSql = "date('now')")
      JOIN "Categories" c ON t.category_id = c.id
      LEFT JOIN "Subcategories" s ON t.subcategory_id = s.id
      JOIN "PaymentModes" p ON t.payment_mode_id = p.id
-     WHERE t.user_id = $1 AND t.date >= ${startDateSql} AND t.date <= ${endDateSql}
+     WHERE t.user_id = $1 AND t.date >= $2 AND t.date <= ${endParam}
      ORDER BY t.date DESC, t.id DESC`,
-    [userId]
+    [userId, startDate]
   );
 
   const categoryBreakdown = await db.query(
     `SELECT c.name, c.type, COALESCE(SUM(t.amount), 0) as amount
      FROM "Transactions" t
      JOIN "Categories" c ON t.category_id = c.id
-     WHERE t.user_id = $1 AND t.date >= ${startDateSql} AND t.date <= ${endDateSql}
+     WHERE t.user_id = $1 AND t.date >= $2 AND t.date <= ${endParam}
      GROUP BY c.name, c.type
      ORDER BY amount DESC`,
-    [userId]
+    [userId, startDate]
   );
 
   return {
@@ -821,7 +822,8 @@ async function fetchReportData(userId, startDateSql, endDateSql = "date('now')")
 // Daily Report
 app.get('/api/reports/daily', authenticateToken, async (req, res) => {
   try {
-    const data = await fetchReportData(req.user.id, "date('now')");
+    const today = new Date().toISOString().split('T')[0];
+    const data = await fetchReportData(req.user.id, today);
     res.json(data);
   } catch (err) {
     console.error(err.message);
@@ -832,7 +834,8 @@ app.get('/api/reports/daily', authenticateToken, async (req, res) => {
 // Weekly Report
 app.get('/api/reports/weekly', authenticateToken, async (req, res) => {
   try {
-    const data = await fetchReportData(req.user.id, "date('now', 'weekday 0', '-7 days')");
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const data = await fetchReportData(req.user.id, weekAgo);
     res.json(data);
   } catch (err) {
     console.error(err.message);
@@ -843,7 +846,9 @@ app.get('/api/reports/weekly', authenticateToken, async (req, res) => {
 // Monthly Report
 app.get('/api/reports/monthly', authenticateToken, async (req, res) => {
   try {
-    const data = await fetchReportData(req.user.id, "date('now', 'start of month')");
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const data = await fetchReportData(req.user.id, startOfMonth);
     res.json(data);
   } catch (err) {
     console.error(err.message);
@@ -854,7 +859,8 @@ app.get('/api/reports/monthly', authenticateToken, async (req, res) => {
 // Yearly Report
 app.get('/api/reports/yearly', authenticateToken, async (req, res) => {
   try {
-    const data = await fetchReportData(req.user.id, "date('now', 'start of year')");
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+    const data = await fetchReportData(req.user.id, startOfYear);
     res.json(data);
   } catch (err) {
     console.error(err.message);
