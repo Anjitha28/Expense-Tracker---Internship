@@ -47,7 +47,7 @@ const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
 // ==========================================================================
 // API BASE & FETCH WRAPPER
 // ==========================================================================
-const API_BASE = window.location.port === '5000' || window.location.hostname.includes('vercel') ? '' : 'http://localhost:5000';
+const API_BASE = (window.location.protocol === 'file:' || (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '5000') ? 'http://localhost:5000' : '';
 
 async function apiFetch(url, options = {}) {
   const headers = {
