@@ -7,7 +7,6 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "postinstall": "npm rebuild sqlite3 --build-from-source",
     "start": "node server.js",
     "dev": "node server.js"
   },
@@ -17,8 +16,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^6.0.1",
+    "pg": "^8.23.0",
     "stylelint": "^17.14.0",
     "stylelint-config-standard": "^40.0.0"
   }

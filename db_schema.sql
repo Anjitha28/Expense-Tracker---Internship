@@ -1,25 +1,25 @@
--- SQLite Database Schema for Smart Personal Expense Tracker
+-- PostgreSQL Database Schema for Smart Personal Expense Tracker
 
 -- Drop tables if they exist
-DROP TABLE IF EXISTS "RecurringTransactions";
-DROP TABLE IF EXISTS "Transactions";
-DROP TABLE IF EXISTS "UserPreferences";
-DROP TABLE IF EXISTS "Subcategories";
-DROP TABLE IF EXISTS "Categories";
-DROP TABLE IF EXISTS "PaymentModes";
-DROP TABLE IF EXISTS "Users";
+DROP TABLE IF EXISTS "RecurringTransactions" CASCADE;
+DROP TABLE IF EXISTS "Transactions" CASCADE;
+DROP TABLE IF EXISTS "UserPreferences" CASCADE;
+DROP TABLE IF EXISTS "Subcategories" CASCADE;
+DROP TABLE IF EXISTS "Categories" CASCADE;
+DROP TABLE IF EXISTS "PaymentModes" CASCADE;
+DROP TABLE IF EXISTS "Users" CASCADE;
 
 -- Users Table
 CREATE TABLE "Users" (
-    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL PRIMARY KEY,
     "email" TEXT UNIQUE NOT NULL,
     "password" TEXT NOT NULL,
-    "created_at" DATETIME DEFAULT CURRENT_TIMESTAMP
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Categories Table
 CREATE TABLE "Categories" (
-    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL PRIMARY KEY,
     "user_id" INTEGER REFERENCES "Users"("id") ON DELETE CASCADE, -- NULL means global/default category
     "name" TEXT NOT NULL,
     "type" TEXT NOT NULL CHECK ("type" IN ('income', 'expense')),
@@ -29,7 +29,7 @@ CREATE TABLE "Categories" (
 
 -- Subcategories Table
 CREATE TABLE "Subcategories" (
-    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL PRIMARY KEY,
     "category_id" INTEGER REFERENCES "Categories"("id") ON DELETE CASCADE NOT NULL,
     "name" TEXT NOT NULL,
     UNIQUE ("category_id", "name")
@@ -37,32 +37,32 @@ CREATE TABLE "Subcategories" (
 
 -- PaymentModes Table
 CREATE TABLE "PaymentModes" (
-    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL PRIMARY KEY,
     "user_id" INTEGER REFERENCES "Users"("id") ON DELETE CASCADE, -- NULL means global
     "name" TEXT UNIQUE NOT NULL
 );
 
 -- Transactions Table
 CREATE TABLE "Transactions" (
-    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL PRIMARY KEY,
     "user_id" INTEGER REFERENCES "Users"("id") ON DELETE CASCADE NOT NULL,
     "type" TEXT NOT NULL CHECK ("type" IN ('income', 'expense')),
     "date" DATE NOT NULL DEFAULT CURRENT_DATE,
-    "amount" REAL NOT NULL CHECK ("amount" > 0),
+    "amount" NUMERIC NOT NULL CHECK ("amount" > 0),
     "category_id" INTEGER REFERENCES "Categories"("id") ON DELETE RESTRICT NOT NULL,
     "subcategory_id" INTEGER REFERENCES "Subcategories"("id") ON DELETE RESTRICT,
     "payment_mode_id" INTEGER REFERENCES "PaymentModes"("id") ON DELETE RESTRICT NOT NULL,
     "notes" TEXT,
     "receipt_url" TEXT,
-    "created_at" DATETIME DEFAULT CURRENT_TIMESTAMP
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- RecurringTransactions Table
 CREATE TABLE "RecurringTransactions" (
-    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL PRIMARY KEY,
     "user_id" INTEGER REFERENCES "Users"("id") ON DELETE CASCADE NOT NULL,
     "type" TEXT NOT NULL CHECK ("type" IN ('income', 'expense')),
-    "amount" REAL NOT NULL CHECK ("amount" > 0),
+    "amount" NUMERIC NOT NULL CHECK ("amount" > 0),
     "category_id" INTEGER REFERENCES "Categories"("id") ON DELETE RESTRICT NOT NULL,
     "subcategory_id" INTEGER REFERENCES "Subcategories"("id") ON DELETE RESTRICT,
     "payment_mode_id" INTEGER REFERENCES "PaymentModes"("id") ON DELETE RESTRICT NOT NULL,
@@ -70,8 +70,8 @@ CREATE TABLE "RecurringTransactions" (
     "start_date" DATE NOT NULL DEFAULT CURRENT_DATE,
     "end_date" DATE,
     "next_due_date" DATE,
-    "is_active" INTEGER DEFAULT 1,
-    "created_at" DATETIME DEFAULT CURRENT_TIMESTAMP
+    "is_active" BOOLEAN DEFAULT TRUE,
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- UserPreferences Table
@@ -79,8 +79,8 @@ CREATE TABLE "UserPreferences" (
     "user_id" INTEGER PRIMARY KEY REFERENCES "Users"("id") ON DELETE CASCADE,
     "theme" TEXT DEFAULT 'light' CHECK ("theme" IN ('light', 'dark')),
     "currency" TEXT DEFAULT 'USD',
-    "notifications_enabled" INTEGER DEFAULT 1,
-    "updated_at" DATETIME DEFAULT CURRENT_TIMESTAMP
+    "notifications_enabled" BOOLEAN DEFAULT TRUE,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- --------------------------------------------------
@@ -158,3 +158,7 @@ INSERT INTO "PaymentModes" ("id", "user_id", "name") VALUES
 (5, NULL, 'Bank Transfer'),
 (6, NULL, 'Mobile Wallet'),
 (7, NULL, 'Cheque');
+
+-- Adjust sequences for tables that were seeded with explicit IDs
+SELECT setval(pg_get_serial_sequence('"Categories"', 'id'), coalesce(max(id), 1), max(id) IS NOT null) FROM "Categories";
+SELECT setval(pg_get_serial_sequence('"PaymentModes"', 'id'), coalesce(max(id), 1), max(id) IS NOT null) FROM "PaymentModes";

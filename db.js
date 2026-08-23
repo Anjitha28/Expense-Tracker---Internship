@@ -1,80 +1,61 @@
-const sqlite3 = require('sqlite3');
-const { open } = require('sqlite');
+const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-let db;
+// Use POSTGRES_URL from Vercel Postgres, or fallback to local DB credentials
+const connectionString = process.env.POSTGRES_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_DATABASE}`;
+
+const pool = new Pool({
+  connectionString: connectionString,
+  // Add SSL requirement if running on Vercel
+  ssl: process.env.POSTGRES_URL ? { rejectUnauthorized: false } : false
+});
 
 async function initDB() {
   try {
-    // Vercel serverless functions have a read-only filesystem except for /tmp
-    const isProd = process.env.VERCEL || process.env.NODE_ENV === 'production';
-    const dbPath = isProd 
-      ? path.join('/tmp', 'expense_tracker.sqlite')
-      : path.join(__dirname, 'expense_tracker.sqlite');
+    const client = await pool.connect();
+    console.log('Connected to PostgreSQL database.');
 
-    db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    });
-
-    console.log(`Connected to SQLite database at ${dbPath}.`);
-
-    // Enable foreign keys
-    await db.run('PRAGMA foreign_keys = ON');
-
-    // Run schema setup if tables don't exist
-    const tableCheck = await db.get(`
-      SELECT name FROM sqlite_master 
-      WHERE type='table' AND name='Users';
+    // Check if the Users table exists
+    const result = await client.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'Users'
+      );
     `);
     
-    if (!tableCheck) {
+    if (!result.rows[0].exists) {
       console.log('Tables do not exist. Initializing database schema...');
       const schemaPath = path.join(__dirname, 'db_schema.sql');
       const schemaSql = fs.readFileSync(schemaPath, 'utf8');
       
-      // sqlite module exec can run multiple statements separated by ;
-      await db.exec(schemaSql);
-      console.log('Database schema initialized and seeded successfully.');
+      await client.query(schemaSql);
+      console.log('Database schema initialized successfully.');
     } else {
       console.log('Database tables already exist. Skipping schema initialization.');
     }
+
+    client.release();
   } catch (err) {
-    console.error('Error initializing database:', err.message);
+    console.error('Error initializing PostgreSQL database:', err.message);
   }
 }
 
+// Wrapper for queries to match original SQLite-compatible API used in server.js
 async function query(text, params = []) {
-  if (!db) {
-    throw new Error('Database not initialized. Call initDB first.');
-  }
-
-  // SQLite arrays for parameters don't like undefined
-  const safeParams = params.map(p => p === undefined ? null : p);
-
-  // Convert Postgres $1, $2, etc. to SQLite ?1, ?2, etc.
-  text = text.replace(/\$(\d+)/g, '?$1');
-
-  // If the query is an INSERT, UPDATE, or DELETE
-  const isWrite = /^\s*(INSERT|UPDATE|DELETE)/i.test(text);
-  if (isWrite) {
-    // For INSERT ... RETURNING, we must use all() to get the rows, and not run()
-    if (/\bRETURNING\b/i.test(text)) {
-      const rows = await db.all(text, safeParams);
-      return { rows, rowCount: rows.length };
-    }
-    const result = await db.run(text, safeParams);
-    return { rowCount: result.changes, lastID: result.lastID };
-  } else {
-    const rows = await db.all(text, safeParams);
-    return { rowCount: rows.length, rows };
-  }
+  const result = await pool.query(text, params);
+  
+  // Return consistent format used by server.js
+  return {
+    rows: result.rows,
+    rowCount: result.rowCount
+  };
 }
 
 module.exports = {
   initDB,
   query,
-  getDb: () => db
+  getPool: () => pool
 };
