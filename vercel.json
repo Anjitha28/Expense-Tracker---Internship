@@ -5,18 +5,14 @@
       "src": "server.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["db_schema.sql"]
+        "includeFiles": ["public/**", "db_schema.sql"]
       }
     }
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server.js"
-    },
-    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/server.js"
     }
   ]
 }
