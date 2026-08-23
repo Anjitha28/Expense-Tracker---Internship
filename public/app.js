@@ -71,8 +71,8 @@ async function apiFetch(url, options = {}) {
     }
     return data;
   } catch (err) {
-    if (err.message && err.message.includes('Failed to fetch')) {
-      throw new Error('Cannot reach server. Make sure the backend is running on port 5000.');
+    if (err instanceof TypeError && err.message === 'Failed to fetch') {
+      throw new Error('Cannot reach server. Make sure the backend is running on port 5000 or the internet connection is active.');
     }
     throw err;
   }
