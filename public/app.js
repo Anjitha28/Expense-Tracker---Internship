@@ -368,8 +368,33 @@ function setupAllEventListeners() {
     item.addEventListener('click', e => {
       e.preventDefault();
       navigateTo(item.getAttribute('data-page'));
+      // Close sidebar on mobile after navigation
+      if (window.innerWidth <= 768) closeSidebar();
     });
   });
+
+  // ── Sidebar toggle (hamburger) ──
+  const sidebarToggleBtn = document.getElementById('btn-sidebar-toggle');
+  const sidebarOverlay   = document.getElementById('sidebar-overlay');
+  const sidebar          = document.getElementById('sidebar');
+
+  if (sidebarToggleBtn) {
+    sidebarToggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('active');
+      document.body.classList.toggle('sidebar-open');
+    });
+  }
+
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', () => closeSidebar());
+  }
+
+  function closeSidebar() {
+    sidebar?.classList.remove('open');
+    sidebarOverlay?.classList.remove('active');
+    document.body.classList.remove('sidebar-open');
+  }
 
   // ── Hash change ──
   window.addEventListener('hashchange', () => {

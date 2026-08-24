@@ -1935,9 +1935,11 @@ input:checked + .slider::before {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 8px 16px 12px;
+  padding: 8px 8px 12px;
   z-index: 500;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .mobile-nav-item {
@@ -1946,14 +1948,26 @@ input:checked + .slider::before {
   align-items: center;
   gap: 3px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   transition: color var(--transition-fast);
-  padding: 4px 8px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
 }
 
 .mobile-nav-item:hover,
 .mobile-nav-item.active { color: var(--balance); }
+
+.mobile-nav-item.active .material-icons-round {
+  background: var(--balance-light);
+  border-radius: 8px;
+  padding: 4px;
+}
 
 .mobile-nav-item .material-icons-round { font-size: 22px !important; }
 
@@ -1968,50 +1982,50 @@ input:checked + .slider::before {
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
 /* ============================================================
-   22. RESPONSIVE
+   22. SIDEBAR OVERLAY & TOGGLE BUTTON
    ============================================================ */
-@media (max-width: 1280px) {
-  .analytics-grid { grid-template-columns: 1fr 1fr; }
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
-@media (max-width: 1024px) {
-  :root { --sidebar-width: 220px; }
-  .metrics-grid { grid-template-columns: repeat(3, 1fr); }
-  .period-metrics-grid { grid-template-columns: repeat(2, 1fr); }
-  .charts-grid { grid-template-columns: 1fr; }
-  .analytics-grid { grid-template-columns: 1fr; }
-  .balance-grid { grid-template-columns: 1fr; }
-  .settings-layout { grid-template-columns: 1fr; }
+.sidebar-overlay.active { display: block; }
+
+.sidebar-toggle-btn { display: none; }
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-    box-shadow: var(--shadow-xl);
-  }
+.topbar-left .topbar-title {
+  min-width: 0;
+}
 
-  .sidebar.open { transform: translateX(0); }
-
-  .main-workspace { margin-left: 0; }
-
-  .page-content { padding: 16px; }
-
-  .metrics-grid { grid-template-columns: 1fr; }
-  .period-metrics-grid { grid-template-columns: repeat(2, 1fr); }
-  .form-row-2 { grid-template-columns: 1fr; }
-  .type-selector-grid { grid-template-columns: 1fr; }
-  .backup-actions-grid { grid-template-columns: 1fr; }
-  .reports-control { flex-direction: column; align-items: flex-start; }
-  .balance-grid { grid-template-columns: 1fr; }
-  .settings-layout { grid-template-columns: 1fr; }
-
-  .floating-add-btn { bottom: 80px; right: 20px; }
-
-  .topbar { padding: 0 16px; }
+.topbar-left .topbar-title h1 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ============================================================
-   23. SMART SUGGESTIONS CARD
+   23. SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ============================================================
+   24. SMART SUGGESTIONS CARD
    ============================================================ */
 .suggestions-list {
   display: flex;
@@ -2028,6 +2042,7 @@ input:checked + .slider::before {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
+  gap: 12px;
 }
 
 .suggestion-item:hover {
@@ -2035,13 +2050,13 @@ input:checked + .slider::before {
   background: var(--bg-hover);
 }
 
-.suggestion-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.suggestion-text { font-size: 13px; font-weight: 500; color: var(--text-primary); flex: 1; min-width: 0; }
 .suggestion-sub  { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
 
-.suggestion-actions { display: flex; gap: 6px; }
+.suggestion-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
 /* ============================================================
-   24. LOADING STATES
+   25. LOADING STATES
    ============================================================ */
 .skeleton {
   background: linear-gradient(90deg, var(--bg-hover) 25%, var(--divider) 50%, var(--bg-hover) 75%);
@@ -2056,7 +2071,7 @@ input:checked + .slider::before {
 }
 
 /* ============================================================
-   25. SPECIAL GRADIENT CARDS
+   26. SPECIAL GRADIENT CARDS
    ============================================================ */
 .hero-stat-card {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -2083,7 +2098,7 @@ input:checked + .slider::before {
 .radial-center { display: flex; align-items: center; justify-content: center; }
 
 /* ============================================================
-   26. PAGE-SPECIFIC EXTRAS
+   27. PAGE-SPECIFIC EXTRAS
    ============================================================ */
 .list-card {}
 
@@ -2092,6 +2107,8 @@ input:checked + .slider::before {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 4px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .page-section-title h3 {
@@ -2101,7 +2118,7 @@ input:checked + .slider::before {
 }
 
 /* ============================================================
-   27. REPORTS TABLE
+   28. REPORTS TABLE
    ============================================================ */
 .report-summary-table {
   width: 100%;
@@ -2116,7 +2133,7 @@ input:checked + .slider::before {
 .report-summary-table td:last-child { text-align: right; font-weight: 700; }
 
 /* ============================================================
-   28. INFO BOXES / ALERTS
+   29. INFO BOXES / ALERTS
    ============================================================ */
 .info-box {
   display: flex;
@@ -2156,4 +2173,448 @@ input:checked + .slider::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
+}
+
+/* ============================================================
+   30. RESPONSIVE — 1280px (Large Laptops)
+   ============================================================ */
+@media (max-width: 1280px) {
+  .analytics-grid { grid-template-columns: 1fr 1fr; }
+  .charts-grid.grid-3 { grid-template-columns: 1fr 1fr; }
+}
+
+/* ============================================================
+   31. RESPONSIVE — 1024px (Laptops / iPads landscape)
+   ============================================================ */
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-width: 220px;
+    --topbar-height: 64px;
+  }
+  .metrics-grid { grid-template-columns: repeat(3, 1fr); }
+  .period-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-grid { grid-template-columns: 1fr; }
+  .analytics-grid { grid-template-columns: 1fr 1fr; }
+  .balance-grid { grid-template-columns: 1fr; }
+  .settings-layout { grid-template-columns: 1fr; }
+  .backup-actions-grid { grid-template-columns: 1fr 1fr; }
+  .big-balance-display h1 { font-size: 40px; }
+}
+
+/* ============================================================
+   32. RESPONSIVE — 768px (Tablets / Mobile Landscape)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* === Sidebar === */
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-xl);
+    z-index: 200;
+    width: 280px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  body.sidebar-open {
+    overflow: hidden;
+  }
+
+  .sidebar-toggle-btn {
+    display: flex;
+    flex-shrink: 0;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* === Main workspace === */
+  .main-workspace {
+    margin-left: 0;
+    padding-bottom: 70px; /* space for mobile nav */
+  }
+
+  /* === Topbar === */
+  .topbar {
+    padding: 0 14px;
+    height: var(--topbar-height);
+  }
+
+  .topbar-title h1 { font-size: 17px; }
+  .topbar-title p  { font-size: 11px; display: none; }
+
+  .topbar-actions { gap: 6px; }
+
+  /* === Page Content === */
+  .page-content {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  /* === Metric cards: 1 column on mobile === */
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .metric-card { padding: 16px 18px; }
+  .metric-amount { font-size: 22px; }
+  .metric-icon { width: 44px; height: 44px; }
+  .metric-icon .material-icons-round { font-size: 22px !important; }
+
+  /* === Period cards: 2 column === */
+  .period-metrics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .period-card { padding: 14px 16px; }
+  .period-amount { font-size: 18px; }
+
+  /* === Charts: single column === */
+  .charts-grid, .charts-grid.grid-3 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .analytics-grid { grid-template-columns: 1fr; gap: 12px; }
+
+  /* === Forms === */
+  .form-row-2 { grid-template-columns: 1fr; }
+  .type-selector-grid { grid-template-columns: 1fr; gap: 10px; }
+  .type-select-card { padding: 18px 16px; }
+
+  /* === Settings === */
+  .settings-layout { grid-template-columns: 1fr; }
+  .backup-actions-grid { grid-template-columns: 1fr; }
+
+  /* === Reports === */
+  .reports-control {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .reports-type-selectors { flex-wrap: wrap; }
+  .reports-actions { flex-wrap: wrap; gap: 8px; }
+
+  /* === Balance page === */
+  .balance-grid { grid-template-columns: 1fr; gap: 12px; }
+  .big-balance-display h1 { font-size: 34px; letter-spacing: -1px; }
+
+  /* === Tables === */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-sm);
+    max-width: 100%;
+  }
+
+  .txn-table th, .txn-table td {
+    padding: 10px 10px;
+    font-size: 12.5px;
+  }
+
+  .txn-name { max-width: 100px; }
+
+  /* === Cards === */
+  .card { padding: 16px 16px; }
+  .card-header { margin-bottom: 12px; padding-bottom: 10px; }
+  .card-header h3 { font-size: 15px; }
+
+  /* === Quick actions === */
+  .shortcuts-row { gap: 8px; }
+  .shortcut-btn { padding: 8px 12px; font-size: 12px; }
+
+  /* === Floating Add Button === */
+  .floating-add-btn {
+    bottom: 76px;
+    right: 16px;
+    width: 52px;
+    height: 52px;
+  }
+
+  /* === Modals === */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-card {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 92vh;
+    max-width: 100%;
+    width: 100%;
+    border-bottom: none;
+    animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes modalSlideUp {
+    from { opacity: 0; transform: translateY(100%); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal-card.sm,
+  .modal-card.lg {
+    max-width: 100%;
+  }
+
+  .modal-header { padding: 18px 20px 14px; }
+  .modal-step-content { padding: 18px 20px; }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-footer .footer-actions-right {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  /* === Auth card === */
+  .auth-card {
+    padding: 32px 24px;
+    border-radius: var(--radius-lg);
+  }
+
+  /* === Section title === */
+  .page-section-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* === Toggle list === */
+  .toggle-item { flex-direction: row; align-items: center; }
+
+  /* === Recurring cards === */
+  .recurring-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* === Info boxes === */
+  .info-box { padding: 12px 14px; font-size: 12px; }
+
+  /* === Theme picker === */
+  .theme-picker-row { flex-direction: row; gap: 10px; }
+  .theme-option-btn { padding: 14px 10px; }
+
+  /* === Tabs === */
+  .tabs { flex-wrap: wrap; }
+  .tab-btn { font-size: 11px; padding: 6px 10px; }
+
+  /* === Report actions === */
+  .reports-actions .btn { font-size: 12px; padding: 9px 14px; }
+}
+
+/* ============================================================
+   33. RESPONSIVE — 480px (Small Mobile)
+   ============================================================ */
+@media (max-width: 480px) {
+  :root {
+    --topbar-height: 60px;
+  }
+
+  .page-content { padding: 12px; gap: 12px; }
+
+  /* Metrics: still 1-col, reduce padding further */
+  .metric-card { padding: 14px 15px; }
+  .metric-amount { font-size: 20px; }
+
+  /* Period cards: 2-col but tighter */
+  .period-metrics-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .period-card { padding: 12px 12px; }
+  .period-amount { font-size: 16px; }
+  .period-label { font-size: 10px; }
+
+  /* Auth */
+  .auth-card { padding: 28px 18px; }
+  .auth-header .brand h2 { font-size: 22px; }
+  .auth-form h3 { font-size: 18px; }
+  .input-group input { padding: 12px 16px 12px 44px; font-size: 14px; }
+
+  /* Topbar */
+  .topbar { padding: 0 12px; }
+  .topbar-title h1 { font-size: 15px; }
+
+  /* Cards */
+  .card { padding: 14px 14px; }
+  .card-header h3 { font-size: 14px; }
+
+  /* Tables */
+  .txn-table th { font-size: 10px; padding: 8px 8px; }
+  .txn-table td { font-size: 12px; padding: 9px 8px; }
+  .txn-name { max-width: 80px; font-size: 12px; }
+  .txn-icon { width: 30px; height: 30px; }
+  .txn-icon .material-icons-round { font-size: 15px !important; }
+
+  /* Chips */
+  .chip { font-size: 10px; padding: 3px 7px; }
+
+  /* Shortcuts */
+  .shortcuts-row { gap: 6px; }
+  .shortcut-btn { padding: 7px 10px; font-size: 11px; }
+  .shortcut-btn .material-icons-round { font-size: 14px !important; }
+
+  /* Balance */
+  .big-balance-display h1 { font-size: 28px; }
+  .health-meta { font-size: 12px; padding: 10px 12px; }
+
+  /* Modals */
+  .modal-header h3 { font-size: 16px; }
+  .modal-step-content { padding: 16px; }
+
+  /* Buttons */
+  .btn { font-size: 13px; padding: 10px 18px; }
+  .btn-block { padding: 12px; }
+
+  /* Settings nav - make it scroll horizontally on small screens */
+  .settings-nav {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 4px;
+    padding-bottom: 4px;
+  }
+
+  .settings-nav-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  /* Recurring */
+  .recurring-card { padding: 14px 14px; }
+  .recurring-amount { font-size: 18px; }
+
+  /* Report period buttons */
+  .report-period-btn { font-size: 11px; padding: 7px 12px; }
+
+  /* Table action buttons */
+  .table-action-btn { width: 26px; height: 26px; border-radius: 6px; }
+  .table-action-btn .material-icons-round { font-size: 14px !important; }
+
+  /* Floating FAB */
+  .floating-add-btn {
+    bottom: 72px;
+    right: 12px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .floating-add-btn .material-icons-round { font-size: 24px !important; }
+
+  /* Page section title */
+  .page-section-title h3 { font-size: 16px; }
+}
+
+/* ============================================================
+   34. RESPONSIVE — 375px and below (iPhone SE / small devices)
+   ============================================================ */
+@media (max-width: 375px) {
+  .page-content { padding: 10px; gap: 10px; }
+
+  .period-metrics-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .period-card { padding: 10px 10px; }
+  .period-amount { font-size: 14px; }
+
+  .metric-amount { font-size: 18px; }
+
+  .auth-card { padding: 24px 14px; border-radius: var(--radius-md); }
+
+  .topbar { padding: 0 10px; }
+  .topbar-title h1 { font-size: 14px; }
+
+  /* Force 1-col period cards if extremely narrow */
+  .charts-grid { grid-template-columns: 1fr; }
+
+  .modal-step-content { padding: 12px; }
+
+  .quick-actions-bar { padding: 12px 14px !important; }
+  .quick-title-group { margin-bottom: 10px; }
+}
+
+/* ============================================================
+   35. PREVENT OVERFLOW — Global Safety Net
+   ============================================================ */
+*, *::before, *::after {
+  max-width: 100%;
+}
+
+img, video, iframe, embed, object {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent apexcharts from causing overflow */
+.apexcharts-canvas {
+  max-width: 100% !important;
+}
+
+/* Safe table wrapper */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Keep chip badges from wrapping badly inside table */
+.txn-table .chip { flex-shrink: 0; }
+
+/* Make card-header wrap on small screens */
+.card-header {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Prevent text from breaking layouts */
+.user-email {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+/* ============================================================
+   36. TOUCH TARGETS — Accessibility
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Ensure all interactive elements are at least 44x44px */
+  .nav-item, .mobile-nav-item {
+    min-height: 44px;
+  }
+
+  .btn { min-height: 44px; }
+  .btn-block { min-height: 48px; }
+
+  .icon-btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .table-action-btn {
+    min-width: 30px;
+    min-height: 30px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    min-height: 44px;
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+
+  .form-group select { min-height: 44px; }
+
+  .tab-btn { min-height: 36px; }
+
+  .shortcut-btn { min-height: 38px; }
+
+  .settings-nav-btn { min-height: 40px; }
+
+  /* Report period buttons */
+  .report-period-btn { min-height: 38px; }
 }

@@ -143,13 +143,21 @@
       </div>
     </aside>
 
+    <!-- Sidebar Overlay for Mobile -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
     <!-- Main Content Area -->
     <div class="main-workspace">
       <!-- Topbar -->
       <header class="topbar">
-        <div class="topbar-title">
-          <h1 id="page-title">Dashboard</h1>
-          <p id="page-subtitle" class="text-secondary">Track, analyze, and optimize your wealth</p>
+        <div class="topbar-left">
+          <button id="btn-sidebar-toggle" class="icon-btn sidebar-toggle-btn" title="Toggle Menu" aria-label="Toggle Navigation">
+            <span class="material-icons-round">menu</span>
+          </button>
+          <div class="topbar-title">
+            <h1 id="page-title">Dashboard</h1>
+            <p id="page-subtitle" class="text-secondary">Track, analyze, and optimize your wealth</p>
+          </div>
         </div>
         <div class="topbar-actions">
           <button id="btn-theme-toggle" class="icon-btn" title="Toggle Theme">
