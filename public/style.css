@@ -2231,7 +2231,6 @@ input:checked + .slider::before {
   /* === Main workspace === */
   .main-workspace {
     margin-left: 0;
-    padding-bottom: 70px; /* space for mobile nav */
   }
 
   /* === Topbar === */
@@ -2327,7 +2326,7 @@ input:checked + .slider::before {
 
   /* === Floating Add Button === */
   .floating-add-btn {
-    bottom: 76px;
+    bottom: 24px;
     right: 16px;
     width: 52px;
     height: 52px;
@@ -2499,7 +2498,7 @@ input:checked + .slider::before {
 
   /* Floating FAB */
   .floating-add-btn {
-    bottom: 72px;
+    bottom: 24px;
     right: 12px;
     width: 48px;
     height: 48px;

@@ -114,18 +114,15 @@ function showAppLayout(loggedIn) {
   const authEl   = document.getElementById('auth-container');
   const appEl    = document.getElementById('app-container');
   const fabBtn   = document.getElementById('btn-floating-add');
-  const mobileNv = document.getElementById('mobile-navigation');
 
   if (loggedIn) {
     authEl.classList.add('hidden');
     appEl.classList.remove('hidden');
     fabBtn.classList.remove('hidden');
-    if (window.innerWidth <= 768) mobileNv.classList.remove('hidden');
   } else {
     authEl.classList.remove('hidden');
     appEl.classList.add('hidden');
     fabBtn.classList.add('hidden');
-    mobileNv.classList.add('hidden');
   }
 }
 
@@ -174,7 +171,7 @@ function navigateTo(pageId) {
   document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
   document.getElementById(`page-${pageId}`).classList.remove('hidden');
 
-  document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(el => {
+  document.querySelectorAll('.nav-item').forEach(el => {
     el.classList.toggle('active', el.getAttribute('data-page') === pageId);
   });
 
