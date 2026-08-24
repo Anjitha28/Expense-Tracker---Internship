@@ -338,7 +338,7 @@
                 <table class="txn-table">
                   <thead>
                     <tr>
-                      <th>Date</th><th>Category</th><th>Payment Mode</th><th>Notes</th><th class="text-right">Amount</th>
+                      <th>Date</th><th>Category</th><th>Subcategory</th><th>Payment Mode</th><th>Notes</th><th class="text-right">Amount</th>
                     </tr>
                   </thead>
                   <tbody id="income-recent-list"></tbody>
@@ -421,7 +421,7 @@
                 <table class="txn-table">
                   <thead>
                     <tr>
-                      <th>Date</th><th>Category</th><th>Payment Mode</th><th>Notes</th><th class="text-right">Amount</th>
+                      <th>Date</th><th>Category</th><th>Subcategory</th><th>Payment Mode</th><th>Notes</th><th class="text-right">Amount</th>
                     </tr>
                   </thead>
                   <tbody id="expense-recent-list"></tbody>
@@ -583,7 +583,7 @@
               <table class="txn-table">
                 <thead>
                   <tr>
-                    <th>Type</th><th>Date</th><th>Category</th><th>Payment Mode</th><th>Notes</th><th class="text-right">Amount</th>
+                    <th>Type</th><th>Date</th><th>Category</th><th>Subcategory</th><th>Payment Mode</th><th>Notes</th><th class="text-right">Amount</th>
                   </tr>
                 </thead>
                 <tbody id="rep-txns-body"></tbody>
@@ -602,13 +602,16 @@
                 <input type="text" id="txns-search" placeholder="Search transactions...">
               </div>
               <div class="flex-row gap-2 flex-wrap align-center">
-                <select id="filter-type" class="form-group custom-select" style="width:130px;">
+                <select id="filter-type" class="custom-select" style="width:130px;">
                   <option value="all">All Types</option>
                   <option value="income">Income</option>
                   <option value="expense">Expense</option>
                 </select>
                 <select id="filter-category" class="custom-select" style="width:160px;">
                   <option value="all">All Categories</option>
+                </select>
+                <select id="filter-subcategory" class="custom-select" style="width:165px;">
+                  <option value="all">All Subcategories</option>
                 </select>
                 <select id="filter-payment" class="custom-select" style="width:155px;">
                   <option value="all">All Payments</option>
@@ -923,11 +926,17 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="txn-subcategory">Subcategory</label>
-            <select id="txn-subcategory">
-              <option value="">Select Subcategory (Optional)</option>
+            <label for="txn-subcategory">Subcategory <span class="required">*</span></label>
+            <select id="txn-subcategory" disabled required>
+              <option value="" disabled selected>Select Subcategory</option>
             </select>
           </div>
+        </div>
+
+        <!-- Custom Subcategory Field for 'Other' -->
+        <div class="form-group mt-3 hidden" id="group-txn-subcategory-other">
+          <label for="txn-subcategory-other">Specify Subcategory</label>
+          <input type="text" id="txn-subcategory-other" placeholder="e.g. Office Lunch, Special Bonus...">
         </div>
 
         <div class="form-row-2 mt-4">

@@ -99,18 +99,56 @@ INSERT INTO "Categories" ("id", "user_id", "name", "type", "icon") VALUES
 
 -- 2. Income Subcategories
 INSERT INTO "Subcategories" ("category_id", "name") VALUES
-(1, 'Monthly Salary'),
+-- Salary (1)
+(1, 'Basic Salary'),
 (1, 'Bonus'),
+(1, 'Incentives'),
 (1, 'Overtime'),
-(2, 'Web Dev'),
+(1, 'Allowances'),
+(1, 'Reimbursement'),
+(1, 'Other'),
+-- Freelancing (2)
+(2, 'Client Payment'),
+(2, 'Project Payment'),
 (2, 'Consulting'),
-(2, 'Writing'),
-(3, 'Retail'),
-(3, 'Services'),
-(3, 'E-commerce'),
+(2, 'Contract Work'),
+(2, 'Other'),
+-- Business (3)
+(3, 'Sales'),
+(3, 'Service Income'),
+(3, 'Commission'),
+(3, 'Business Profit'),
+(3, 'Other'),
+-- Investments (4)
 (4, 'Stocks'),
 (4, 'Mutual Funds'),
-(4, 'Dividends');
+(4, 'ETFs'),
+(4, 'Bonds'),
+(4, 'Gold'),
+(4, 'Fixed Deposit'),
+(4, 'Crypto'),
+(4, 'Retirement/Pension'),
+(4, 'Other'),
+-- Gifts (5)
+(5, 'Family'),
+(5, 'Friends'),
+(5, 'Birthday'),
+(5, 'Wedding'),
+(5, 'Anniversary'),
+(5, 'Festival'),
+(5, 'Other'),
+-- Rental Income (6)
+(6, 'Residential Rent'),
+(6, 'Commercial Rent'),
+(6, 'Parking Rent'),
+(6, 'Property Income'),
+(6, 'Other'),
+-- Others (7)
+(7, 'Cashback'),
+(7, 'Refund'),
+(7, 'Payback'),
+(7, 'Earnings'),
+(7, 'Other');
 
 -- 3. Expense Categories
 INSERT INTO "Categories" ("id", "user_id", "name", "type", "icon") VALUES
@@ -127,25 +165,95 @@ INSERT INTO "Categories" ("id", "user_id", "name", "type", "icon") VALUES
 
 -- 4. Expense Subcategories
 INSERT INTO "Subcategories" ("category_id", "name") VALUES
-(8, 'Breakfast'),
-(8, 'Lunch'),
-(8, 'Dinner'),
-(8, 'Snacks'),
-(10, 'Grocery'),
-(10, 'Clothing'),
-(10, 'Electronics'),
-(11, 'Bus'),
-(11, 'Taxi'),
-(11, 'Train'),
-(11, 'Fuel'),
+-- Bills (12)
 (12, 'Electricity'),
 (12, 'Water'),
+(12, 'Gas'),
 (12, 'Internet'),
-(12, 'Phone'),
+(12, 'Mobile/Phone'),
+(12, 'Insurance'),
+(12, 'Subscription'),
+(12, 'Credit Card Bill'),
+(12, 'Other'),
+-- Education (15)
+(15, 'Tuition Fees'),
+(15, 'Course/Training'),
+(15, 'Books'),
+(15, 'Stationery'),
+(15, 'Exam Fees'),
+(15, 'Certification'),
+(15, 'College/School Fees'),
+(15, 'Other'),
+-- Entertainment (13)
 (13, 'Movies'),
+(13, 'OTT/Streaming'),
 (13, 'Games'),
+(13, 'Events'),
 (13, 'Music'),
-(13, 'Subscriptions');
+(13, 'Hobbies'),
+(13, 'Other'),
+-- Food (8)
+(8, 'Groceries'),
+(8, 'Restaurants'),
+(8, 'Food Delivery'),
+(8, 'Snacks'),
+(8, 'Coffee/Tea'),
+(8, 'Fast Food'),
+(8, 'Other'),
+-- Medical (14)
+(14, 'Doctor'),
+(14, 'Medicines'),
+(14, 'Hospital'),
+(14, 'Lab Tests'),
+(14, 'Dental'),
+(14, 'Health Insurance'),
+(14, 'Other'),
+-- Others (17)
+(17, 'Bank Charges'),
+(17, 'Fines'),
+(17, 'Donations'),
+(17, 'Personal Care'),
+(17, 'Miscellaneous'),
+(17, 'Unexpected Expense'),
+(17, 'Other'),
+-- Rent (9)
+(9, 'House Rent'),
+(9, 'Room Rent'),
+(9, 'Office Rent'),
+(9, 'Maintenance'),
+(9, 'Parking'),
+(9, 'Other'),
+-- Shopping (10)
+(10, 'Clothing'),
+(10, 'Electronics'),
+(10, 'Home & Furniture'),
+(10, 'Beauty & Cosmetics'),
+(10, 'Accessories'),
+(10, 'Gifts'),
+(10, 'Online Shopping'),
+(10, 'Other'),
+-- Transport (11)
+(11, 'Fuel'),
+(11, 'Bus'),
+(11, 'Train'),
+(11, 'Taxi/Cab'),
+(11, 'Auto'),
+(11, 'Metro'),
+(11, 'Vehicle Repair'),
+(11, 'Vehicle Maintenance'),
+(11, 'Parking'),
+(11, 'Toll'),
+(11, 'Other'),
+-- Travel (16)
+(16, 'Flight'),
+(16, 'Train Ticket'),
+(16, 'Hotel'),
+(16, 'Travel Food'),
+(16, 'Local Transport'),
+(16, 'Sightseeing'),
+(16, 'Travel Activities'),
+(16, 'Travel Shopping'),
+(16, 'Other');
 
 -- --------------------------------------------------
 -- Seed Initial Global Payment Modes

@@ -96,16 +96,16 @@ app.post('/api/auth/register', async (req, res) => {
     try {
       await db.query(`
         INSERT INTO "Transactions" (user_id, type, date, amount, category_id, subcategory_id, payment_mode_id, notes) VALUES
-        ($1, 'income', date('now', '-10 days'), 3500.00, 1, 1, 5, 'Monthly Salary'),
-        ($1, 'income', date('now', '-2 days'), 550.00, 2, 4, 2, 'Freelance Web Work'),
-        ($1, 'income', date('now', '-8 days'), 120.00, 4, 10, 5, 'Stock Dividend Payout'),
-        ($1, 'expense', date('now', '-9 days'), 1200.00, 9, NULL, 5, 'Apartment Rent'),
-        ($1, 'expense', date('now'), 45.50, 8, 15, 4, 'Bistro Dinner'),
-        ($1, 'expense', date('now'), 6.20, 8, 16, 1, 'Morning Coffee & Donut'),
-        ($1, 'expense', date('now', '-3 days'), 149.00, 10, 18, 3, 'Winter Jacket Shopping'),
-        ($1, 'expense', date('now', '-4 days'), 22.00, 11, 21, 6, 'Taxi office commute'),
-        ($1, 'expense', date('now', '-6 days'), 85.00, 12, 26, 3, 'Broadband Internet Bill'),
-        ($1, 'expense', date('now', '-1 days'), 14.99, 13, 31, 3, 'Streaming Subscription')
+        ($1, 'income', CURRENT_DATE - INTERVAL '10 days', 3500.00, 1, 1, 5, 'Monthly Salary'),
+        ($1, 'income', CURRENT_DATE - INTERVAL '2 days', 550.00, 2, 4, 2, 'Freelance Web Work'),
+        ($1, 'income', CURRENT_DATE - INTERVAL '8 days', 120.00, 4, 10, 5, 'Stock Dividend Payout'),
+        ($1, 'expense', CURRENT_DATE - INTERVAL '9 days', 1200.00, 9, NULL, 5, 'Apartment Rent'),
+        ($1, 'expense', CURRENT_DATE, 45.50, 8, 15, 4, 'Bistro Dinner'),
+        ($1, 'expense', CURRENT_DATE, 6.20, 8, 16, 1, 'Morning Coffee & Donut'),
+        ($1, 'expense', CURRENT_DATE - INTERVAL '3 days', 149.00, 10, 18, 3, 'Winter Jacket Shopping'),
+        ($1, 'expense', CURRENT_DATE - INTERVAL '4 days', 22.00, 11, 21, 6, 'Taxi office commute'),
+        ($1, 'expense', CURRENT_DATE - INTERVAL '6 days', 85.00, 12, 26, 3, 'Broadband Internet Bill'),
+        ($1, 'expense', CURRENT_DATE - INTERVAL '1 days', 14.99, 13, 31, 3, 'Streaming Subscription')
       `, [userId]);
     } catch (seedErr) {
       console.error('Failed to seed user mock transactions:', seedErr.message);
@@ -158,16 +158,16 @@ app.post('/api/auth/login', async (req, res) => {
       try {
         await db.query(`
           INSERT INTO "Transactions" (user_id, type, date, amount, category_id, subcategory_id, payment_mode_id, notes) VALUES
-          ($1, 'income', date('now', '-10 days'), 3500.00, 1, 1, 5, 'Monthly Salary'),
-          ($1, 'income', date('now', '-2 days'), 550.00, 2, 4, 2, 'Freelance Web Work'),
-          ($1, 'income', date('now', '-8 days'), 120.00, 4, 10, 5, 'Stock Dividend Payout'),
-          ($1, 'expense', date('now', '-9 days'), 1200.00, 9, NULL, 5, 'Apartment Rent'),
-          ($1, 'expense', date('now'), 45.50, 8, 15, 4, 'Bistro Dinner'),
-          ($1, 'expense', date('now'), 6.20, 8, 16, 1, 'Morning Coffee & Donut'),
-          ($1, 'expense', date('now', '-3 days'), 149.00, 10, 18, 3, 'Winter Jacket Shopping'),
-          ($1, 'expense', date('now', '-4 days'), 22.00, 11, 21, 6, 'Taxi office commute'),
-          ($1, 'expense', date('now', '-6 days'), 85.00, 12, 26, 3, 'Broadband Internet Bill'),
-          ($1, 'expense', date('now', '-1 days'), 14.99, 13, 31, 3, 'Streaming Subscription')
+          ($1, 'income', CURRENT_DATE - INTERVAL '10 days', 3500.00, 1, 1, 5, 'Monthly Salary'),
+          ($1, 'income', CURRENT_DATE - INTERVAL '2 days', 550.00, 2, 4, 2, 'Freelance Web Work'),
+          ($1, 'income', CURRENT_DATE - INTERVAL '8 days', 120.00, 4, 10, 5, 'Stock Dividend Payout'),
+          ($1, 'expense', CURRENT_DATE - INTERVAL '9 days', 1200.00, 9, NULL, 5, 'Apartment Rent'),
+          ($1, 'expense', CURRENT_DATE, 45.50, 8, 15, 4, 'Bistro Dinner'),
+          ($1, 'expense', CURRENT_DATE, 6.20, 8, 16, 1, 'Morning Coffee & Donut'),
+          ($1, 'expense', CURRENT_DATE - INTERVAL '3 days', 149.00, 10, 18, 3, 'Winter Jacket Shopping'),
+          ($1, 'expense', CURRENT_DATE - INTERVAL '4 days', 22.00, 11, 21, 6, 'Taxi office commute'),
+          ($1, 'expense', CURRENT_DATE - INTERVAL '6 days', 85.00, 12, 26, 3, 'Broadband Internet Bill'),
+          ($1, 'expense', CURRENT_DATE - INTERVAL '1 days', 14.99, 13, 31, 3, 'Streaming Subscription')
         `, [user.id]);
       } catch (seedErr) {
         console.error('Failed to seed user mock transactions:', seedErr.message);
@@ -390,7 +390,7 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
   try {
     const result = await db.query(
       `INSERT INTO "Transactions" (user_id, type, date, amount, category_id, subcategory_id, payment_mode_id, notes, receipt_url)
-       VALUES ($1, $2, COALESCE($3, date('now')), $4, $5, $6, $7, $8, $9)
+       VALUES ($1, $2, COALESCE($3, CURRENT_DATE), $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [req.user.id, type, date || null, amount, category_id, subcategory_id || null, payment_mode_id, notes || null, receipt_url || null]
     );

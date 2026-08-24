@@ -452,6 +452,18 @@ function setupAllEventListeners() {
     populateSubcategories(parseInt(e.target.value));
     updateSmartSuggestions();
   });
+  document.getElementById('txn-subcategory').addEventListener('change', e => {
+    const subSel = e.target;
+    const selectedText = (subSel.options[subSel.selectedIndex]?.text || '').trim().toLowerCase();
+    const otherGroup = document.getElementById('group-txn-subcategory-other');
+    if (selectedText === 'other') {
+      otherGroup.classList.remove('hidden');
+      document.getElementById('txn-subcategory-other').focus();
+    } else {
+      otherGroup.classList.add('hidden');
+      document.getElementById('txn-subcategory-other').value = '';
+    }
+  });
   document.getElementById('txn-amount').addEventListener('input', updateSmartSuggestions);
   document.getElementById('txn-step-2-form').addEventListener('submit', handleTxnSubmit);
   document.getElementById('txn-receipt').addEventListener('change', e => {
@@ -513,8 +525,13 @@ function setupAllEventListeners() {
   document.getElementById('btn-export-excel').addEventListener('click', exportReportExcel);
 
   // ── Transactions filters ──
-  ['filter-type','filter-category','filter-payment'].forEach(id => {
-    document.getElementById(id).addEventListener('change', () => loadTransactions(true));
+  ['filter-type','filter-category','filter-subcategory','filter-payment'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', e => {
+      if (id === 'filter-category') {
+        populateSubcategoryFilter(e.target.value);
+      }
+      loadTransactions(true);
+    });
   });
   let searchDebounce;
   document.getElementById('txns-search').addEventListener('input', () => {
@@ -523,10 +540,12 @@ function setupAllEventListeners() {
   });
   document.getElementById('btn-txns-load-more').addEventListener('click', () => loadTransactions(false));
   document.getElementById('btn-txns-clear-filters').addEventListener('click', () => {
-    document.getElementById('filter-type').value     = 'all';
-    document.getElementById('filter-category').value = 'all';
-    document.getElementById('filter-payment').value  = 'all';
-    document.getElementById('txns-search').value     = '';
+    document.getElementById('filter-type').value        = 'all';
+    document.getElementById('filter-category').value    = 'all';
+    populateSubcategoryFilter('all');
+    document.getElementById('filter-subcategory').value = 'all';
+    document.getElementById('filter-payment').value     = 'all';
+    document.getElementById('txns-search').value        = '';
     loadTransactions(true);
   });
 
@@ -711,18 +730,43 @@ function populateCategories(type) {
     sel.appendChild(opt);
   });
   // Reset subcategory
-  document.getElementById('txn-subcategory').innerHTML = '<option value="">Select Subcategory (Optional)</option>';
+  const subSel = document.getElementById('txn-subcategory');
+  subSel.innerHTML = '<option value="" disabled selected>Select Subcategory</option>';
+  subSel.disabled = true;
+  document.getElementById('group-txn-subcategory-other')?.classList.add('hidden');
+  document.getElementById('txn-subcategory-other').value = '';
 }
 
 function populateSubcategories(categoryId) {
-  const sel = document.getElementById('txn-subcategory');
-  sel.innerHTML = '<option value="">Select Subcategory (Optional)</option>';
-  state.subcategories.filter(s => s.category_id === categoryId).forEach(s => {
+  const subSel = document.getElementById('txn-subcategory');
+  document.getElementById('group-txn-subcategory-other')?.classList.add('hidden');
+  document.getElementById('txn-subcategory-other').value = '';
+
+  if (!categoryId || isNaN(categoryId)) {
+    subSel.innerHTML = '<option value="" disabled selected>Select Subcategory</option>';
+    subSel.disabled = true;
+    return;
+  }
+
+  const subs = state.subcategories.filter(s => s.category_id === categoryId);
+  subSel.innerHTML = '<option value="" disabled selected>Select Subcategory</option>';
+
+  if (subs.length > 0) {
+    subs.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.name;
+      subSel.appendChild(opt);
+    });
+    subSel.disabled = false;
+  } else {
+    // If no predefined subcategories found, provide at least 'Other'
     const opt = document.createElement('option');
-    opt.value = s.id;
-    opt.textContent = s.name;
-    sel.appendChild(opt);
-  });
+    opt.value = '';
+    opt.textContent = 'Other';
+    subSel.appendChild(opt);
+    subSel.disabled = false;
+  }
 }
 
 function populatePaymentModes(selectEl = null) {
@@ -788,20 +832,31 @@ async function handleTxnSubmit(e) {
   const amount = parseFloat(document.getElementById('txn-amount').value);
   const catId  = parseInt(document.getElementById('txn-category').value);
   const subVal = document.getElementById('txn-subcategory').value;
+  const subSel = document.getElementById('txn-subcategory');
   const payId  = parseInt(document.getElementById('txn-payment-mode').value);
-  const notes  = document.getElementById('txn-notes').value.trim();
+  let notes    = document.getElementById('txn-notes').value.trim();
 
   if (!date)          { showToast('Please select a date.', 'error'); return; }
   if (isNaN(amount) || amount <= 0) { showToast('Please enter a valid amount > 0.', 'error'); return; }
   if (!catId)         { showToast('Please select a category.', 'error'); return; }
   if (!payId)         { showToast('Please select a payment mode.', 'error'); return; }
 
+  const selectedSubText = (subSel.selectedIndex >= 0 ? subSel.options[subSel.selectedIndex]?.text : '') || '';
+  const customOther = document.getElementById('txn-subcategory-other')?.value?.trim();
+
+  if (selectedSubText.toLowerCase() === 'other' && customOther) {
+    notes = notes ? `${notes} [Subcategory: ${customOther}]` : `[Subcategory: ${customOther}]`;
+  }
+
+  let subId = subVal ? parseInt(subVal) : null;
+  if (isNaN(subId)) subId = null;
+
   const payload = {
     type: state.currentTxnType,
     date,
     amount,
     category_id:    catId,
-    subcategory_id: subVal ? parseInt(subVal) : null,
+    subcategory_id: subId,
     payment_mode_id: payId,
     notes: notes || null
   };
@@ -846,9 +901,24 @@ async function editTransaction(id) {
     document.getElementById('txn-amount').value      = parseFloat(t.amount);
     document.getElementById('txn-category').value    = t.category_id;
     populateSubcategories(t.category_id);
-    if (t.subcategory_id)   document.getElementById('txn-subcategory').value   = t.subcategory_id;
+    if (t.subcategory_id) {
+      document.getElementById('txn-subcategory').value = t.subcategory_id;
+      const subSel = document.getElementById('txn-subcategory');
+      const selectedSubText = (subSel.options[subSel.selectedIndex]?.text || '').toLowerCase();
+      if (selectedSubText === 'other') {
+        document.getElementById('group-txn-subcategory-other')?.classList.remove('hidden');
+        const match = (t.notes || '').match(/\[Subcategory:\s*([^\]]+)\]/);
+        if (match) {
+          document.getElementById('txn-subcategory-other').value = match[1];
+        }
+      }
+    }
     if (t.payment_mode_id)  document.getElementById('txn-payment-mode').value  = t.payment_mode_id;
-    document.getElementById('txn-notes').value = t.notes || '';
+
+    // Clean notes display if it had [Subcategory: ...]
+    let displayNotes = t.notes || '';
+    displayNotes = displayNotes.replace(/\s*\[Subcategory:\s*[^\]]+\]\s*/g, '').trim();
+    document.getElementById('txn-notes').value = displayNotes;
   } catch(err) {
     showToast('Failed to load transaction: ' + err.message, 'error');
   }
@@ -994,13 +1064,14 @@ async function loadIncomePage() {
   const tbody  = document.getElementById('income-recent-list');
   tbody.innerHTML = '';
   if (!recent.length) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-secondary" style="padding:16px">No income transactions found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-secondary" style="padding:16px">No income transactions found.</td></tr>`;
   } else {
     recent.forEach(t => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${formatDate(t.date)}</td>
         <td><span class="chip chip-income">${t.category_name}</span></td>
+        <td class="text-secondary">${t.subcategory_name || '-'}</td>
         <td>${t.payment_mode_name}</td>
         <td class="text-secondary">${t.notes || '-'}</td>
         <td class="text-right font-semibold income-color">+${fmt(t.amount)}</td>
@@ -1069,13 +1140,14 @@ async function loadExpensePage() {
   const tbody  = document.getElementById('expense-recent-list');
   tbody.innerHTML = '';
   if (!recent.length) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-secondary" style="padding:16px">No expense transactions found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-secondary" style="padding:16px">No expense transactions found.</td></tr>`;
   } else {
     recent.forEach(t => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${formatDate(t.date)}</td>
         <td><span class="chip chip-expense">${t.category_name}</span></td>
+        <td class="text-secondary">${t.subcategory_name || '-'}</td>
         <td>${t.payment_mode_name}</td>
         <td class="text-secondary">${t.notes || '-'}</td>
         <td class="text-right font-semibold expense-color">-${fmt(t.amount)}</td>
@@ -1248,7 +1320,7 @@ async function loadReportsPage() {
   document.getElementById('rep-txns-count').textContent = `${transactions?.length || 0} records`;
 
   if (!transactions?.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-secondary" style="padding:16px">No transactions in this period.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-secondary" style="padding:16px">No transactions in this period.</td></tr>`;
   } else {
     transactions.forEach(t => {
       const isInc = t.type === 'income';
@@ -1257,6 +1329,7 @@ async function loadReportsPage() {
         <td><span class="chip ${isInc ? 'chip-income' : 'chip-expense'}">${isInc ? 'Income' : 'Expense'}</span></td>
         <td>${formatDate(t.date)}</td>
         <td>${t.category_name || '-'}</td>
+        <td class="text-secondary">${t.subcategory_name || '-'}</td>
         <td>${t.payment_mode_name || '-'}</td>
         <td class="text-secondary">${t.notes || '-'}</td>
         <td class="text-right font-semibold ${isInc ? 'income-color' : 'expense-color'}">${isInc ? '+' : '-'}${fmt(t.amount)}</td>
@@ -1324,6 +1397,7 @@ async function loadTransactions(reset = true) {
 
   const type      = document.getElementById('filter-type').value;
   const catFilter = document.getElementById('filter-category').value;
+  const subFilter = document.getElementById('filter-subcategory')?.value;
   const payFilter = document.getElementById('filter-payment').value;
   const search    = document.getElementById('txns-search').value.trim();
 
@@ -1335,6 +1409,7 @@ async function loadTransactions(reset = true) {
 
   let filtered = txns;
   if (catFilter && catFilter !== 'all') filtered = filtered.filter(t => String(t.category_id) === String(catFilter));
+  if (subFilter && subFilter !== 'all') filtered = filtered.filter(t => String(t.subcategory_id) === String(subFilter));
   if (payFilter && payFilter !== 'all') filtered = filtered.filter(t => String(t.payment_mode_id) === String(payFilter));
 
   const tbody = document.getElementById('txns-table-body');
@@ -1377,6 +1452,31 @@ async function loadTransactions(reset = true) {
   if (reset) state.allTransactions = filtered.concat(state.allTransactions.filter(t => !filtered.some(f => f.id === t.id)));
 }
 
+function populateSubcategoryFilter(selectedCategoryId) {
+  const subSel = document.getElementById('filter-subcategory');
+  if (!subSel) return;
+  const savedSub = subSel.value;
+  subSel.innerHTML = '<option value="all">All Subcategories</option>';
+
+  let relevantSubs = state.subcategories;
+  if (selectedCategoryId && selectedCategoryId !== 'all') {
+    relevantSubs = state.subcategories.filter(s => String(s.category_id) === String(selectedCategoryId));
+  }
+
+  relevantSubs.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s.id;
+    o.textContent = s.name;
+    subSel.appendChild(o);
+  });
+
+  if (Array.from(subSel.options).some(o => o.value === savedSub)) {
+    subSel.value = savedSub;
+  } else {
+    subSel.value = 'all';
+  }
+}
+
 function populateFilterDropdowns() {
   const catSel = document.getElementById('filter-category');
   const paySel = document.getElementById('filter-payment');
@@ -1391,6 +1491,8 @@ function populateFilterDropdowns() {
     catSel.appendChild(o);
   });
   catSel.value = savedCat;
+
+  populateSubcategoryFilter(catSel.value);
 
   paySel.innerHTML = '<option value="all">All Payments</option>';
   state.paymentModes.forEach(p => {
