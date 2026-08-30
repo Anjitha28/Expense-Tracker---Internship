@@ -292,8 +292,8 @@ function setupAllEventListeners() {
     const password = document.getElementById('login-password').value;
 
     const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRx.test(email)) { showFormError('login', 'Invalid email format.'); return; }
-    if (password.length < 8)  { showFormError('login', 'Password must be at least 8 characters.'); return; }
+    if (!emailRx.test(email)) { showFormError('login', 'Please enter a valid email address.'); return; }
+    if (!password) { showFormError('login', 'Please enter your password.'); return; }
 
     const btn = document.getElementById('btn-login-submit');
     setLoading(btn, true);
@@ -301,7 +301,7 @@ function setupAllEventListeners() {
       const data = await apiFetch('/api/auth/login', { method: 'POST', body: { email, password } });
       await handleAuthSuccess(data);
     } catch (err) {
-      showFormError('login', err.message);
+      showFormError('login', err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(btn, false);
     }
@@ -316,7 +316,7 @@ function setupAllEventListeners() {
     const confirm  = document.getElementById('signup-confirm-password').value;
 
     const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRx.test(email)) { showFormError('signup', 'Invalid email format.'); return; }
+    if (!emailRx.test(email)) { showFormError('signup', 'Please enter a valid email address.'); return; }
     if (password.length < 8)  { showFormError('signup', 'Password must be at least 8 characters.'); return; }
     if (password !== confirm)  { showFormError('signup', 'Passwords do not match.'); return; }
 
@@ -324,11 +324,11 @@ function setupAllEventListeners() {
     setLoading(btn, true);
     try {
       await apiFetch('/api/auth/register', { method: 'POST', body: { email, password, confirmPassword: confirm } });
-      showToast('Account created! Please log in.', 'success');
+      showToast('Account created successfully! Please log in.', 'success');
       document.getElementById('signup-form').reset();
       navigateTo('login');
     } catch (err) {
-      showFormError('signup', err.message);
+      showFormError('signup', err.message || 'Registration failed.');
     } finally {
       setLoading(btn, false);
     }
@@ -344,8 +344,13 @@ function setupAllEventListeners() {
     applyTheme(state.preferences.theme);
     updateCurrencySymbol();
     showAppLayout(true);
-    await loadInitialData();
     navigateTo('dashboard');
+    showToast(`Welcome back, ${state.user?.email || 'User'}!`, 'success');
+    try {
+      await loadInitialData();
+    } catch (err) {
+      console.warn('Initial data load warning:', err);
+    }
   }
 
   // ── Logout ──

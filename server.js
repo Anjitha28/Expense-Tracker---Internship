@@ -134,47 +134,19 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   try {
-    let user;
-    const userRes = await db.query('SELECT * FROM "Users" WHERE email = $1', [email]);
+    const normalizedEmail = email.trim().toLowerCase();
+    const userRes = await db.query('SELECT * FROM "Users" WHERE LOWER(email) = LOWER($1)', [normalizedEmail]);
     
     if (userRes.rowCount === 0) {
-      // Auto-create user for seamless access (Mock authentication)
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-      
-      const newUser = await db.query(
-        'INSERT INTO "Users" (email, password) VALUES ($1, $2) RETURNING id, email',
-        [email, hashedPassword]
-      );
-      user = { id: newUser.rows[0].id, email: newUser.rows[0].email };
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
 
-      // Create default UserPreferences
-      await db.query(
-        'INSERT INTO "UserPreferences" (user_id, theme, currency, notifications_enabled) VALUES ($1, $2, $3, $4)',
-        [user.id, 'light', 'USD', true]
-      );
+    const user = userRes.rows[0];
 
-      // Seed mock transactions for a rich UX immediately
-      try {
-        await db.query(`
-          INSERT INTO "Transactions" (user_id, type, date, amount, category_id, subcategory_id, payment_mode_id, notes) VALUES
-          ($1, 'income', CURRENT_DATE - INTERVAL '10 days', 3500.00, 1, 1, 5, 'Monthly Salary'),
-          ($1, 'income', CURRENT_DATE - INTERVAL '2 days', 550.00, 2, 4, 2, 'Freelance Web Work'),
-          ($1, 'income', CURRENT_DATE - INTERVAL '8 days', 120.00, 4, 10, 5, 'Stock Dividend Payout'),
-          ($1, 'expense', CURRENT_DATE - INTERVAL '9 days', 1200.00, 9, NULL, 5, 'Apartment Rent'),
-          ($1, 'expense', CURRENT_DATE, 45.50, 8, 15, 4, 'Bistro Dinner'),
-          ($1, 'expense', CURRENT_DATE, 6.20, 8, 16, 1, 'Morning Coffee & Donut'),
-          ($1, 'expense', CURRENT_DATE - INTERVAL '3 days', 149.00, 10, 18, 3, 'Winter Jacket Shopping'),
-          ($1, 'expense', CURRENT_DATE - INTERVAL '4 days', 22.00, 11, 21, 6, 'Taxi office commute'),
-          ($1, 'expense', CURRENT_DATE - INTERVAL '6 days', 85.00, 12, 26, 3, 'Broadband Internet Bill'),
-          ($1, 'expense', CURRENT_DATE - INTERVAL '1 days', 14.99, 13, 31, 3, 'Streaming Subscription')
-        `, [user.id]);
-      } catch (seedErr) {
-        console.error('Failed to seed user mock transactions:', seedErr.message);
-      }
-    } else {
-      user = userRes.rows[0];
-      // Note: Deliberately bypassing password verification per requirements
+    // Validate password with bcrypt
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
     // Fetch user preference
@@ -192,7 +164,7 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err.message, err.stack);
-    res.status(500).json({ error: 'Server error during login.', details: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Server error during login.' });
   }
 });
 
