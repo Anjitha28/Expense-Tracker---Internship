@@ -175,6 +175,11 @@ function navigateTo(pageId) {
     el.classList.toggle('active', el.getAttribute('data-page') === pageId);
   });
 
+  // Close mobile sidebar drawer if open
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-overlay')?.classList.remove('active');
+  document.body.classList.remove('sidebar-open');
+
   state.activePage = pageId;
   window.location.hash = `#${pageId}`;
 
@@ -619,6 +624,31 @@ function setupAllEventListeners() {
       document.getElementById('pay-create-form').reset();
       loadSettingsPage();
     } catch(err) { showToast(err.message, 'error'); }
+  });
+
+  // Modal backdrop click dismiss
+  document.getElementById('category-modal')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('category-modal')) {
+      document.getElementById('category-modal').classList.add('hidden');
+    }
+  });
+  document.getElementById('payment-modal')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('payment-modal')) {
+      document.getElementById('payment-modal').classList.add('hidden');
+    }
+  });
+
+  // Global Escape key dismiss
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeTxnModal();
+      closeRecurringModal();
+      document.getElementById('category-modal')?.classList.add('hidden');
+      document.getElementById('payment-modal')?.classList.add('hidden');
+      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('sidebar-overlay')?.classList.remove('active');
+      document.body.classList.remove('sidebar-open');
+    }
   });
 
   // ── Backup / Restore ──

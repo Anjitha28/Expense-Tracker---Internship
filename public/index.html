@@ -2,7 +2,10 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0ea5e9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>AURA – Smart Personal Expense Tracker</title>
   <meta name="description" content="AURA is a professional personal finance manager for tracking income, expenses, and savings with beautiful analytics.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -596,30 +599,30 @@
         <!-- ===== 6. TRANSACTIONS PAGE ===== -->
         <section id="page-transactions" class="page-section hidden">
           <!-- Filter Bar -->
-          <div class="card">
-            <div class="flex-row justify-between align-center flex-wrap gap-4">
-              <div class="search-filter-group" style="flex:1;min-width:200px;max-width:340px">
+          <div class="card filter-card">
+            <div class="filter-bar-layout">
+              <div class="search-filter-group">
                 <span class="material-icons-round filter-icon">search</span>
                 <input type="text" id="txns-search" placeholder="Search transactions...">
               </div>
-              <div class="flex-row gap-2 flex-wrap align-center">
-                <select id="filter-type" class="custom-select" style="width:130px;">
+              <div class="filter-controls-group">
+                <select id="filter-type" class="custom-select filter-select">
                   <option value="all">All Types</option>
                   <option value="income">Income</option>
                   <option value="expense">Expense</option>
                 </select>
-                <select id="filter-category" class="custom-select" style="width:160px;">
+                <select id="filter-category" class="custom-select filter-select">
                   <option value="all">All Categories</option>
                 </select>
-                <select id="filter-subcategory" class="custom-select" style="width:165px;">
+                <select id="filter-subcategory" class="custom-select filter-select">
                   <option value="all">All Subcategories</option>
                 </select>
-                <select id="filter-payment" class="custom-select" style="width:155px;">
+                <select id="filter-payment" class="custom-select filter-select">
                   <option value="all">All Payments</option>
                 </select>
-                <button id="btn-txns-clear-filters" class="btn btn-outline" style="padding:9px 14px;font-size:13px;">
+                <button id="btn-txns-clear-filters" class="btn btn-outline filter-clear-btn">
                   <span class="material-icons-round" style="font-size:16px!important">clear</span>
-                  Clear
+                  <span>Clear</span>
                 </button>
               </div>
             </div>
