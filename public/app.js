@@ -731,7 +731,8 @@ function populateCategories(type) {
   state.categories.filter(c => c.type === type).forEach(c => {
     const opt = document.createElement('option');
     opt.value = c.id;
-    opt.textContent = c.name;
+    const isTea = c.name?.toLowerCase() === 'tea' || c.icon === '☕';
+    opt.textContent = isTea ? `☕ ${c.name}` : c.name;
     sel.appendChild(opt);
   });
   // Reset subcategory
@@ -981,21 +982,24 @@ function buildTxnRow(t, cols) {
   const row = document.createElement('tr');
   const isInc   = t.type === 'income';
   const amtCls  = isInc ? 'income-color' : 'expense-color';
-  const icon    = t.category_icon || (isInc ? 'payments' : 'shopping_bag');
+  const isTea   = t.category_name?.toLowerCase() === 'tea' || t.category_icon === '☕';
   const iconBg  = isInc ? 'bg-income-light' : 'bg-expense-light';
   const iconClr = isInc ? 'income-color' : 'expense-color';
   const prefix  = isInc ? '+' : '-';
+  const iconMarkup = isTea
+    ? `<span style="font-size:18px;line-height:1;display:inline-flex;align-items:center;justify-content:center">☕</span>`
+    : `<span class="material-icons-round ${iconClr}">${t.category_icon || (isInc ? 'payments' : 'shopping_bag')}</span>`;
 
   if (cols === 6) {
     row.innerHTML = `
       <td>
         <div class="txn-icon-wrap">
-          <div class="txn-icon ${iconBg}"><span class="material-icons-round ${iconClr}">${icon}</span></div>
-          <div class="flex-col"><span class="txn-name">${t.notes || t.category_name || '-'}</span></div>
+          <div class="txn-icon ${iconBg}">${iconMarkup}</div>
+          <div class="flex-col"><span class="txn-name">${t.notes || (isTea ? '☕ Tea' : t.category_name) || '-'}</span></div>
         </div>
       </td>
       <td>${formatDate(t.date)}</td>
-      <td><span class="chip ${isInc ? 'chip-income' : 'chip-expense'}">${t.category_name || '-'}</span></td>
+      <td><span class="chip ${isInc ? 'chip-income' : 'chip-expense'}">${isTea ? '☕ Tea' : (t.category_name || '-')}</span></td>
       <td>${t.subcategory_name || '-'}</td>
       <td>${t.payment_mode_name || '-'}</td>
       <td class="text-right font-semibold ${amtCls}">${prefix}${fmt(t.amount)}</td>
@@ -1141,6 +1145,7 @@ async function loadExpensePage() {
   renderProgressList(document.getElementById('expense-subcategory-analysis'), data.subcategories || [], 'expense');
   renderProgressList(document.getElementById('expense-payment-analysis'),     data.paymentModes  || [], 'expense');
 
+  // Recent expense
   const recent = await apiFetch('/api/transactions?type=expense&limit=8');
   const tbody  = document.getElementById('expense-recent-list');
   tbody.innerHTML = '';
@@ -1148,10 +1153,11 @@ async function loadExpensePage() {
     tbody.innerHTML = `<tr><td colspan="6" class="text-center text-secondary" style="padding:16px">No expense transactions found.</td></tr>`;
   } else {
     recent.forEach(t => {
+      const isTea = t.category_name?.toLowerCase() === 'tea' || t.category_icon === '☕';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${formatDate(t.date)}</td>
-        <td><span class="chip chip-expense">${t.category_name}</span></td>
+        <td><span class="chip chip-expense">${isTea ? '☕ Tea' : t.category_name}</span></td>
         <td class="text-secondary">${t.subcategory_name || '-'}</td>
         <td>${t.payment_mode_name}</td>
         <td class="text-secondary">${t.notes || '-'}</td>
@@ -1329,11 +1335,12 @@ async function loadReportsPage() {
   } else {
     transactions.forEach(t => {
       const isInc = t.type === 'income';
+      const isTea = t.category_name?.toLowerCase() === 'tea' || t.category_icon === '☕';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><span class="chip ${isInc ? 'chip-income' : 'chip-expense'}">${isInc ? 'Income' : 'Expense'}</span></td>
         <td>${formatDate(t.date)}</td>
-        <td>${t.category_name || '-'}</td>
+        <td>${isTea ? '☕ Tea' : (t.category_name || '-')}</td>
         <td class="text-secondary">${t.subcategory_name || '-'}</td>
         <td>${t.payment_mode_name || '-'}</td>
         <td class="text-secondary">${t.notes || '-'}</td>
@@ -1427,6 +1434,7 @@ async function loadTransactions(reset = true) {
 
   filtered.forEach(t => {
     const isInc = t.type === 'income';
+    const isTea = t.category_name?.toLowerCase() === 'tea' || t.category_icon === '☕';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
@@ -1435,7 +1443,7 @@ async function loadTransactions(reset = true) {
         </span>
       </td>
       <td>${formatDate(t.date)}</td>
-      <td><span class="chip ${isInc ? 'chip-income' : 'chip-expense'}">${t.category_name || '-'}</span></td>
+      <td><span class="chip ${isInc ? 'chip-income' : 'chip-expense'}">${isTea ? '☕ Tea' : (t.category_name || '-')}</span></td>
       <td class="text-secondary">${t.subcategory_name || '-'}</td>
       <td>${t.payment_mode_name || '-'}</td>
       <td class="text-secondary" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.notes || '-'}</td>
@@ -1492,7 +1500,8 @@ function populateFilterDropdowns() {
   state.categories.forEach(c => {
     const o = document.createElement('option');
     o.value = c.id;
-    o.textContent = `${c.name} (${c.type})`;
+    const isTea = c.name?.toLowerCase() === 'tea' || c.icon === '☕';
+    o.textContent = isTea ? `☕ ${c.name} (${c.type})` : `${c.name} (${c.type})`;
     catSel.appendChild(o);
   });
   catSel.value = savedCat;
@@ -1530,12 +1539,13 @@ async function loadRecurringPage() {
 
   list.forEach(r => {
     const isInc = r.type === 'income';
+    const isTea = r.category_name?.toLowerCase() === 'tea' || r.category_icon === '☕';
     const card  = document.createElement('div');
     card.className = 'recurring-card';
     card.innerHTML = `
       <div class="recurring-card-header">
         <div class="recurring-info">
-          <span class="recurring-name">${r.category_name || 'Recurring'}</span>
+          <span class="recurring-name">${isTea ? '☕ Tea' : (r.category_name || 'Recurring')}</span>
           <span class="recurring-meta">${capitalize(r.frequency)} · ${r.payment_mode_name || ''}</span>
         </div>
         <span class="chip ${isInc ? 'chip-income' : 'chip-expense'}">${isInc ? 'Income' : 'Expense'}</span>
@@ -1586,7 +1596,8 @@ function populateRecurringCategories(type) {
   state.categories.filter(c => c.type === type).forEach(c => {
     const o = document.createElement('option');
     o.value = c.id;
-    o.textContent = c.name;
+    const isTea = c.name?.toLowerCase() === 'tea' || c.icon === '☕';
+    o.textContent = isTea ? `☕ ${c.name}` : c.name;
     sel.appendChild(o);
   });
 }
@@ -1671,9 +1682,13 @@ async function loadSettingsPage() {
   expEl.innerHTML = '';
 
   state.categories.forEach(c => {
+    const isTea = c.name?.toLowerCase() === 'tea' || c.icon === '☕';
     const chip = document.createElement('div');
     chip.className = `chip ${c.type === 'income' ? 'chip-income' : 'chip-expense'}`;
-    chip.innerHTML = `<span class="material-icons-round" style="font-size:14px!important">${c.icon || 'star'}</span><span>${c.name}</span>${c.user_id === null ? '<span class="text-xs text-muted" style="margin-left:3px">(Global)</span>' : ''}`;
+    const iconHtml = isTea
+      ? `<span style="font-size:14px;line-height:1;margin-right:2px">☕</span>`
+      : `<span class="material-icons-round" style="font-size:14px!important">${c.icon || 'star'}</span>`;
+    chip.innerHTML = `${iconHtml}<span>${c.name}</span>${c.user_id === null ? '<span class="text-xs text-muted" style="margin-left:3px">(Global)</span>' : ''}`;
     (c.type === 'income' ? incEl : expEl).appendChild(chip);
   });
 

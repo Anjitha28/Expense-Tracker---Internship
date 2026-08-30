@@ -38,6 +38,30 @@ async function initDB() {
       console.log('Database tables already exist. Skipping schema initialization.');
     }
 
+    // Ensure default "Tea" expense category exists consistently
+    try {
+      const teaCheck = await client.query(`
+        SELECT id FROM "Categories" WHERE LOWER(name) = 'tea' AND type = 'expense'
+      `);
+      if (teaCheck.rowCount === 0) {
+        const insertRes = await client.query(`
+          INSERT INTO "Categories" (user_id, name, type, icon)
+          VALUES (NULL, 'Tea', 'expense', '☕')
+          RETURNING id
+        `);
+        const teaCatId = insertRes.rows[0].id;
+        const teaSubs = ['Milk Tea', 'Black Tea', 'Green Tea', 'Masala Tea', 'Snacks & Tea', 'Other'];
+        for (const sub of teaSubs) {
+          await client.query(`
+            INSERT INTO "Subcategories" (category_id, name) VALUES ($1, $2)
+          `, [teaCatId, sub]);
+        }
+        console.log('Default "Tea" category & subcategories verified.');
+      }
+    } catch (catErr) {
+      console.warn('Note on Tea category verification:', catErr.message);
+    }
+
     client.release();
   } catch (err) {
     console.error('Error initializing PostgreSQL database:', err.message);

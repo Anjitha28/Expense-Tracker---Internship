@@ -161,7 +161,8 @@ INSERT INTO "Categories" ("id", "user_id", "name", "type", "icon") VALUES
 (14, NULL, 'Medical', 'expense', 'medical_services'),
 (15, NULL, 'Education', 'expense', 'school'),
 (16, NULL, 'Travel', 'expense', 'flight'),
-(17, NULL, 'Others', 'expense', 'more_horiz');
+(17, NULL, 'Tea', 'expense', '☕'),
+(18, NULL, 'Others', 'expense', 'more_horiz');
 
 -- 4. Expense Subcategories
 INSERT INTO "Subcategories" ("category_id", "name") VALUES
@@ -253,7 +254,14 @@ INSERT INTO "Subcategories" ("category_id", "name") VALUES
 (16, 'Sightseeing'),
 (16, 'Travel Activities'),
 (16, 'Travel Shopping'),
-(16, 'Other');
+(16, 'Other'),
+-- Tea (17)
+(17, 'Milk Tea'),
+(17, 'Black Tea'),
+(17, 'Green Tea'),
+(17, 'Masala Tea'),
+(17, 'Snacks & Tea'),
+(17, 'Other');
 
 -- --------------------------------------------------
 -- Seed Initial Global Payment Modes
