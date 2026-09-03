@@ -1416,23 +1416,6 @@ function setupCalendarEventListeners() {
   document.getElementById('btn-cal-next')?.addEventListener('click', () => changeCalendarMonth(1));
   document.getElementById('btn-cal-today')?.addEventListener('click', jumpToToday);
 
-  // Filter Mode Tabs (Month / Year / Date)
-  document.getElementById('cal-mode-tabs')?.addEventListener('click', e => {
-    const btn = e.target.closest('.cal-mode-btn');
-    if (!btn) return;
-    document.querySelectorAll('#cal-mode-tabs .cal-mode-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    const mode = btn.dataset.mode;
-    state.calendar.filterMode = mode;
-
-    document.getElementById('cal-month-filters')?.classList.toggle('hidden', mode !== 'month');
-    document.getElementById('cal-year-filters')?.classList.toggle('hidden', mode !== 'year');
-    document.getElementById('cal-date-filters')?.classList.toggle('hidden', mode !== 'date');
-
-    loadCalendarPage();
-  });
-
   // Month selector change
   document.getElementById('cal-select-month')?.addEventListener('change', e => {
     state.calendar.currentMonth = parseInt(e.target.value);
@@ -1442,23 +1425,6 @@ function setupCalendarEventListeners() {
   // Year selector change
   document.getElementById('cal-select-year')?.addEventListener('change', e => {
     state.calendar.currentYear = parseInt(e.target.value);
-    loadCalendarPage();
-  });
-
-  // Year-only selector change
-  document.getElementById('cal-select-year-only')?.addEventListener('change', e => {
-    state.calendar.currentYear = parseInt(e.target.value);
-    loadCalendarPage();
-  });
-
-  // Specific Date input change
-  document.getElementById('cal-input-specific-date')?.addEventListener('change', e => {
-    const val = e.target.value;
-    if (!val) return;
-    const [y, m, d] = val.split('-').map(Number);
-    state.calendar.currentYear = y;
-    state.calendar.currentMonth = m - 1;
-    state.calendar.selectedDate = val;
     loadCalendarPage();
   });
 
@@ -1480,9 +1446,9 @@ function setupCalendarEventListeners() {
 
   // Date Details Type Tabs (All / Income / Expense)
   document.getElementById('cal-details-type-tabs')?.addEventListener('click', e => {
-    const btn = e.target.closest('.cal-tab-btn');
+    const btn = e.target.closest('.cal-detail-tab-btn');
     if (!btn) return;
-    document.querySelectorAll('#cal-details-type-tabs .cal-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#cal-details-type-tabs .cal-detail-tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.calendar.detailFilter = btn.dataset.tab;
     renderDateDetails(state.calendar.selectedDate, false);
@@ -1492,8 +1458,6 @@ function setupCalendarEventListeners() {
 function populateCalendarFilterDropdowns() {
   const monthSel = document.getElementById('cal-select-month');
   const yearSel = document.getElementById('cal-select-year');
-  const yearOnlySel = document.getElementById('cal-select-year-only');
-  const dateInput = document.getElementById('cal-input-specific-date');
 
   if (monthSel) monthSel.value = String(state.calendar.currentMonth);
 
@@ -1511,64 +1475,25 @@ function populateCalendarFilterDropdowns() {
     }
   }
   if (yearSel) yearSel.value = String(state.calendar.currentYear);
-
-  if (yearOnlySel && yearOnlySel.options.length === 0) {
-    yearOnlySel.innerHTML = '';
-    for (let y = startYr; y <= endYr; y++) {
-      const opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = y;
-      yearOnlySel.appendChild(opt);
-    }
-  }
-  if (yearOnlySel) yearOnlySel.value = String(state.calendar.currentYear);
-
-  if (dateInput) {
-    dateInput.value = state.calendar.selectedDate || todayISO();
-  }
 }
 
 async function loadCalendarPage() {
   populateCalendarFilterDropdowns();
 
-  const { currentYear, currentMonth, filterMode } = state.calendar;
+  const { currentYear, currentMonth } = state.calendar;
 
-  // Title header text
-  const titleEl = document.getElementById('cal-current-period-title');
-  const gridTitleEl = document.getElementById('cal-grid-month-title');
-  if (filterMode === 'year') {
-    const yrStr = `Year ${currentYear}`;
-    if (titleEl) titleEl.textContent = yrStr;
-    if (gridTitleEl) gridTitleEl.textContent = `All Transactions for ${currentYear}`;
-  } else if (filterMode === 'date') {
-    const dStr = formatDate(state.calendar.selectedDate);
-    if (titleEl) titleEl.textContent = dStr;
-    if (gridTitleEl) gridTitleEl.textContent = `Calendar View – ${MONTH_NAMES[currentMonth]} ${currentYear}`;
-  } else {
-    const mStr = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
-    if (titleEl) titleEl.textContent = mStr;
-    if (gridTitleEl) gridTitleEl.textContent = `Monthly Transactions – ${mStr}`;
-  }
+  // Cover the month and adjacent leading/trailing days
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+  
+  // 7 days before and after to safely cover grid
+  const queryStart = new Date(firstDayOfMonth);
+  queryStart.setDate(queryStart.getDate() - 7);
+  const queryEnd = new Date(lastDayOfMonth);
+  queryEnd.setDate(queryEnd.getDate() + 7);
 
-  // Calculate visible range for API query
-  let startDateStr, endDateStr;
-  if (filterMode === 'year') {
-    startDateStr = `${currentYear}-01-01`;
-    endDateStr = `${currentYear}-12-31`;
-  } else {
-    // Cover the month and adjacent leading/trailing days
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-    
-    // 7 days before and after to safely cover grid
-    const queryStart = new Date(firstDayOfMonth);
-    queryStart.setDate(queryStart.getDate() - 7);
-    const queryEnd = new Date(lastDayOfMonth);
-    queryEnd.setDate(queryEnd.getDate() + 7);
-
-    startDateStr = queryStart.toISOString().split('T')[0];
-    endDateStr = queryEnd.toISOString().split('T')[0];
-  }
+  const startDateStr = queryStart.toISOString().split('T')[0];
+  const endDateStr = queryEnd.toISOString().split('T')[0];
 
   // Fetch transactions in range
   let txns = [];
@@ -1590,12 +1515,10 @@ async function loadCalendarPage() {
     if (!txnsMap[dStr]) txnsMap[dStr] = [];
     txnsMap[dStr].push(t);
 
-    // Calculate period summaries
+    // Calculate period summaries for current month
     const amt = parseFloat(t.amount) || 0;
     const tDate = new Date(t.date);
-    const isInPeriod = (filterMode === 'year') 
-      ? (tDate.getFullYear() === currentYear)
-      : (tDate.getFullYear() === currentYear && tDate.getMonth() === currentMonth);
+    const isInPeriod = (tDate.getFullYear() === currentYear && tDate.getMonth() === currentMonth);
 
     if (isInPeriod) {
       activeDaysSet.add(dStr);
@@ -1618,7 +1541,7 @@ async function loadCalendarPage() {
   const balEl = document.getElementById('cal-summary-balance');
   const net = totalIncome - totalExpense;
   balEl.textContent = `${net >= 0 ? '+' : ''}${fmt(net)}`;
-  balEl.className = `${net >= 0 ? 'income-color' : 'expense-color'} font-bold`;
+  balEl.className = `cal-kpi-mini-val ${net >= 0 ? 'income-color' : 'expense-color'}`;
   document.getElementById('cal-summary-days').textContent = `${activeDaysSet.size} days`;
 
   // Render Grid, Legend, and Date Details
@@ -1669,13 +1592,18 @@ function renderCalendarGrid() {
       isOtherMonth = true;
     }
 
+    if (isOtherMonth) {
+      cell.classList.add('cal-day-other-month');
+      container.appendChild(cell);
+      continue;
+    }
+
     // Standard ISO string YYYY-MM-DD
     const mStr = String(cellMonth + 1).padStart(2, '0');
     const dStr = String(dayNum).padStart(2, '0');
     const isoDate = `${cellYear}-${mStr}-${dStr}`;
 
     cell.dataset.date = isoDate;
-    if (isOtherMonth) cell.classList.add('cal-day-other-month');
     if (isoDate === todayStr) cell.classList.add('cal-day-today');
     if (isoDate === selectedDate) cell.classList.add('cal-day-selected');
 
@@ -1756,10 +1684,6 @@ function selectCalendarDate(isoDate, shouldScrollMobile = true) {
     c.classList.toggle('cal-day-selected', c.dataset.date === isoDate);
   });
 
-  // Update specific date input if visible
-  const specificInput = document.getElementById('cal-input-specific-date');
-  if (specificInput) specificInput.value = isoDate;
-
   // Render Date Details
   renderDateDetails(isoDate);
 
@@ -1801,14 +1725,12 @@ function renderDateDetails(isoDate, animate = false) {
   document.getElementById('cal-detail-expense-sum').textContent = fmt(dayExpense);
   const netEl = document.getElementById('cal-detail-net-sum');
   netEl.textContent = `${dayNet >= 0 ? '+' : ''}${fmt(dayNet)}`;
-  netEl.className = `stat-pill-val ${dayNet >= 0 ? 'balance-color' : 'expense-color'}`;
+  netEl.className = `daily-pill-amt ${dayNet >= 0 ? 'balance-color' : 'expense-color'}`;
 
   // Tab counts
   document.getElementById('cal-count-all').textContent = allTxns.length;
   document.getElementById('cal-count-income').textContent = incomeTxns.length;
   document.getElementById('cal-count-expense').textContent = expenseTxns.length;
-  document.getElementById('cal-badge-income-count').textContent = `${incomeTxns.length} items`;
-  document.getElementById('cal-badge-expense-count').textContent = `${expenseTxns.length} items`;
 
   const emptyEl = document.getElementById('cal-details-empty');
   const incSection = document.getElementById('cal-details-income-section');
@@ -1852,41 +1774,24 @@ function createCalendarTxnCard(t) {
   const meta = getCategoryMeta(t.category_name, t.type);
 
   const card = document.createElement('div');
-  card.className = `cal-txn-item ${isInc ? 'type-income' : 'type-expense'}`;
-
-  const iconHtml = meta.isEmoji
-    ? `<span style="font-size:16px;line-height:1">${meta.icon}</span>`
-    : `<span class="material-icons-round" style="font-size:17px!important">${meta.icon}</span>`;
+  card.className = `cal-txn-card ${isInc ? 'type-income' : 'type-expense'}`;
 
   card.innerHTML = `
-    <div class="cal-txn-left">
-      <div class="cal-txn-icon-badge ${meta.cls}">
-        ${iconHtml}
-      </div>
-      <div class="cal-txn-info">
-        <div class="cal-txn-type-tag ${isInc ? 'income-color' : 'expense-color'}">
-          ${t.type.toUpperCase()} · ${meta.label.toUpperCase()}
-        </div>
-        <div class="cal-txn-title-row">
-          <span class="cal-txn-title">${t.notes || meta.label}</span>
-        </div>
-        <div class="cal-txn-meta-row">
-          ${t.subcategory_name ? `<span class="cal-txn-sub">${t.subcategory_name}</span> · ` : ''}
-          <span class="cal-txn-mode-tag">${t.payment_mode_name || 'Cash'}</span>
-        </div>
-      </div>
-    </div>
-    <div class="cal-txn-right">
-      <span class="cal-txn-amount ${isInc ? 'income-color' : 'expense-color'}">
+    <div class="cal-txn-card-header">
+      <span class="cal-txn-tag">${isInc ? 'INCOME' : 'EXPENSE'} · ${meta.label.toUpperCase()}</span>
+      <span class="cal-txn-card-amount ${isInc ? 'income-color' : 'expense-color'}">
         ${isInc ? '+' : '-'}${fmt(t.amount)}
       </span>
-      <div class="cal-txn-actions">
-        <button onclick="editTransaction(${t.id})" class="table-action-btn btn-edit" title="Edit Entry">
-          <span class="material-icons-round" style="font-size:15px!important">edit</span>
-        </button>
-        <button onclick="deleteTransaction(${t.id})" class="table-action-btn btn-delete" title="Delete Entry">
-          <span class="material-icons-round" style="font-size:15px!important">delete</span>
-        </button>
+    </div>
+    <h4 class="cal-txn-heading">${t.notes || meta.label}</h4>
+    <div class="cal-txn-amt-row">
+      <div class="flex-row align-center gap-2">
+        <span class="cal-txn-card-mode">${t.payment_mode_name || 'Cash'}</span>
+        ${t.subcategory_name ? `<span class="cal-txn-sub">· ${t.subcategory_name}</span>` : ''}
+      </div>
+      <div class="cal-txn-card-actions">
+        <button onclick="editTransaction(${t.id})" class="btn btn-outline btn-xs" title="Edit Entry">Edit</button>
+        <button onclick="deleteTransaction(${t.id})" class="btn btn-ghost-danger btn-xs" title="Delete Entry">Delete</button>
       </div>
     </div>
   `;
