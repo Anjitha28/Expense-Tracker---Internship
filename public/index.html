@@ -115,6 +115,10 @@
           <span class="material-icons-round balance-color">account_balance</span>
           <span>Balance</span>
         </a>
+        <a href="#calendar" data-page="calendar" class="nav-item">
+          <span class="material-icons-round text-blue">calendar_month</span>
+          <span>Calendar</span>
+        </a>
         <a href="#reports" data-page="reports" class="nav-item">
           <span class="material-icons-round">bar_chart</span>
           <span>Reports</span>
@@ -519,7 +523,254 @@
           </div>
         </section>
 
-        <!-- ===== 5. REPORTS PAGE ===== -->
+        <!-- ===== 5. CALENDAR PAGE ===== -->
+        <section id="page-calendar" class="page-section hidden">
+          <!-- Calendar Filter & Nav Card -->
+          <div class="calendar-toolbar card">
+            <div class="cal-top-row">
+              <div class="cal-mode-tabs" id="cal-mode-tabs">
+                <button class="cal-mode-btn active" data-mode="month">
+                  <span class="material-icons-round">calendar_view_month</span>
+                  <span>By Month</span>
+                </button>
+                <button class="cal-mode-btn" data-mode="year">
+                  <span class="material-icons-round">calendar_today</span>
+                  <span>By Year</span>
+                </button>
+                <button class="cal-mode-btn" data-mode="date">
+                  <span class="material-icons-round">event</span>
+                  <span>By Date</span>
+                </button>
+              </div>
+
+              <!-- Quick Navigation & Month display -->
+              <div class="cal-nav-group">
+                <button id="btn-cal-prev" class="icon-btn cal-nav-btn" title="Previous Month" aria-label="Previous Month">
+                  <span class="material-icons-round">chevron_left</span>
+                </button>
+                <h2 id="cal-current-period-title" class="cal-period-title">September 2026</h2>
+                <button id="btn-cal-next" class="icon-btn cal-nav-btn" title="Next Month" aria-label="Next Month">
+                  <span class="material-icons-round">chevron_right</span>
+                </button>
+                <button id="btn-cal-today" class="btn btn-outline btn-sm cal-today-btn">
+                  <span class="material-icons-round">today</span>
+                  <span>Today</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Dynamic filter subrow -->
+            <div class="cal-filter-controls" id="cal-filter-controls">
+              <!-- Month & Year Selector (Active in Month Mode) -->
+              <div class="cal-filter-group" id="cal-month-filters">
+                <div class="cal-input-wrap">
+                  <label for="cal-select-month">Month</label>
+                  <select id="cal-select-month" class="custom-select">
+                    <option value="0">January</option>
+                    <option value="1">February</option>
+                    <option value="2">March</option>
+                    <option value="3">April</option>
+                    <option value="4">May</option>
+                    <option value="5">June</option>
+                    <option value="6">July</option>
+                    <option value="7">August</option>
+                    <option value="8">September</option>
+                    <option value="9">October</option>
+                    <option value="10">November</option>
+                    <option value="11">December</option>
+                  </select>
+                </div>
+                <div class="cal-input-wrap">
+                  <label for="cal-select-year">Year</label>
+                  <select id="cal-select-year" class="custom-select"></select>
+                </div>
+              </div>
+
+              <!-- Year Only Selector (Active in Year Mode) -->
+              <div class="cal-filter-group hidden" id="cal-year-filters">
+                <div class="cal-input-wrap">
+                  <label for="cal-select-year-only">Select Year</label>
+                  <select id="cal-select-year-only" class="custom-select"></select>
+                </div>
+              </div>
+
+              <!-- Date Picker (Active in Date Mode) -->
+              <div class="cal-filter-group hidden" id="cal-date-filters">
+                <div class="cal-input-wrap">
+                  <label for="cal-input-specific-date">Select Specific Date</label>
+                  <input type="date" id="cal-input-specific-date" class="custom-input">
+                </div>
+              </div>
+
+              <div class="cal-filter-actions">
+                <button id="btn-cal-add-txn" class="btn btn-primary btn-sm">
+                  <span class="material-icons-round">add</span>
+                  <span>Add Transaction</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Period Summary KPI strip -->
+          <div class="cal-kpi-grid">
+            <div class="cal-kpi-card income-border">
+              <div class="cal-kpi-icon-wrap bg-income-light">
+                <span class="material-icons-round income-color">trending_up</span>
+              </div>
+              <div class="cal-kpi-data">
+                <span class="cal-kpi-label">Period Income</span>
+                <h3 id="cal-summary-income" class="income-color">₹0.00</h3>
+              </div>
+            </div>
+            <div class="cal-kpi-card expense-border">
+              <div class="cal-kpi-icon-wrap bg-expense-light">
+                <span class="material-icons-round expense-color">trending_down</span>
+              </div>
+              <div class="cal-kpi-data">
+                <span class="cal-kpi-label">Period Expenses</span>
+                <h3 id="cal-summary-expense" class="expense-color">₹0.00</h3>
+              </div>
+            </div>
+            <div class="cal-kpi-card balance-border">
+              <div class="cal-kpi-icon-wrap bg-balance-light">
+                <span class="material-icons-round balance-color">account_balance_wallet</span>
+              </div>
+              <div class="cal-kpi-data">
+                <span class="cal-kpi-label">Net Balance</span>
+                <h3 id="cal-summary-balance" class="balance-color">₹0.00</h3>
+              </div>
+            </div>
+            <div class="cal-kpi-card active-border">
+              <div class="cal-kpi-icon-wrap bg-purple-light">
+                <span class="material-icons-round text-purple">event_available</span>
+              </div>
+              <div class="cal-kpi-data">
+                <span class="cal-kpi-label">Active Trans. Days</span>
+                <h3 id="cal-summary-days" class="text-purple">0 days</h3>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Two-Column Layout (Desktop) / Stacked (Mobile) -->
+          <div class="cal-workspace-grid">
+            <!-- Left: Calendar Grid Card -->
+            <div class="card cal-calendar-card">
+              <div class="cal-card-header">
+                <div class="cal-header-info">
+                  <h3 id="cal-grid-month-title">Monthly Transaction Calendar</h3>
+                  <p class="text-secondary text-xs">Click any date to inspect full financial breakdown</p>
+                </div>
+              </div>
+
+              <!-- Calendar Days Header (Sunday - Saturday) -->
+              <div class="cal-weekdays-header">
+                <div class="cal-weekday-name sun">Sun</div>
+                <div class="cal-weekday-name">Mon</div>
+                <div class="cal-weekday-name">Tue</div>
+                <div class="cal-weekday-name">Wed</div>
+                <div class="cal-weekday-name">Thu</div>
+                <div class="cal-weekday-name">Fri</div>
+                <div class="cal-weekday-name sat">Sat</div>
+              </div>
+
+              <!-- Calendar Days Grid (7 columns x rows) -->
+              <div class="cal-days-grid" id="cal-days-grid">
+                <!-- Dynamic Day Cells Injected Here -->
+              </div>
+
+              <!-- Category Legend & Visual Color Guide -->
+              <div class="cal-legend-footer">
+                <div class="cal-legend-title">
+                  <span class="material-icons-round" style="font-size:16px!important">palette</span>
+                  <span>Category Color Key</span>
+                </div>
+                <div class="cal-legend-items" id="cal-legend-items">
+                  <!-- Dynamic or standard legend chips injected here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column (Desktop) / Below (Mobile): Selected Date Details Panel -->
+            <div class="card cal-details-panel" id="calendar-date-details-panel">
+              <div class="cal-details-header">
+                <div class="cal-selected-date-badge">
+                  <span class="material-icons-round text-blue" style="font-size:22px!important">event</span>
+                  <div>
+                    <span class="text-secondary text-xs uppercase tracking">Selected Date</span>
+                    <h3 id="cal-details-date-title">Thursday, 3 Sep 2026</h3>
+                  </div>
+                </div>
+                <button id="btn-cal-add-to-selected-date" class="btn btn-outline btn-sm" title="Add transaction for this date">
+                  <span class="material-icons-round">add</span>
+                  <span>Add Entry</span>
+                </button>
+              </div>
+
+              <!-- Daily Stats Pills -->
+              <div class="cal-details-stats">
+                <div class="cal-stat-pill inc">
+                  <span class="stat-pill-label">Income</span>
+                  <span id="cal-detail-income-sum" class="stat-pill-val income-color">₹0.00</span>
+                </div>
+                <div class="cal-stat-pill exp">
+                  <span class="stat-pill-label">Expense</span>
+                  <span id="cal-detail-expense-sum" class="stat-pill-val expense-color">₹0.00</span>
+                </div>
+                <div class="cal-stat-pill bal">
+                  <span class="stat-pill-label">Net Balance</span>
+                  <span id="cal-detail-net-sum" class="stat-pill-val balance-color">₹0.00</span>
+                </div>
+              </div>
+
+              <!-- Tab/Filter for Income / Expense / All inside Date Details -->
+              <div class="cal-details-tabs" id="cal-details-type-tabs">
+                <button class="cal-tab-btn active" data-tab="all" id="cal-tab-all">All (<span id="cal-count-all">0</span>)</button>
+                <button class="cal-tab-btn" data-tab="income" id="cal-tab-income">Income (<span id="cal-count-income">0</span>)</button>
+                <button class="cal-tab-btn" data-tab="expense" id="cal-tab-expense">Expenses (<span id="cal-count-expense">0</span>)</button>
+              </div>
+
+              <!-- Transactions Content Container -->
+              <div class="cal-details-txns-container">
+                <!-- Empty State -->
+                <div id="cal-details-empty" class="cal-empty-state hidden">
+                  <span class="material-icons-round cal-empty-icon">event_busy</span>
+                  <h4>No transactions for this date</h4>
+                  <p class="text-secondary text-sm">There are no financial entries recorded on this day.</p>
+                  <button id="btn-cal-empty-add" class="btn btn-outline btn-sm mt-3">
+                    <span class="material-icons-round">add</span>
+                    <span>Add Transaction</span>
+                  </button>
+                </div>
+
+                <!-- Income Section -->
+                <div id="cal-details-income-section" class="cal-section-group">
+                  <div class="cal-section-header">
+                    <div class="flex-row align-center gap-2">
+                      <span class="material-icons-round income-color" style="font-size:18px!important">trending_up</span>
+                      <h4>Income Entries</h4>
+                    </div>
+                    <span class="chip chip-income text-xs" id="cal-badge-income-count">0</span>
+                  </div>
+                  <div class="cal-txns-list" id="cal-details-income-list"></div>
+                </div>
+
+                <!-- Expense Section -->
+                <div id="cal-details-expense-section" class="cal-section-group">
+                  <div class="cal-section-header">
+                    <div class="flex-row align-center gap-2">
+                      <span class="material-icons-round expense-color" style="font-size:18px!important">trending_down</span>
+                      <h4>Expense Entries</h4>
+                    </div>
+                    <span class="chip chip-expense text-xs" id="cal-badge-expense-count">0</span>
+                  </div>
+                  <div class="cal-txns-list" id="cal-details-expense-list"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 6. REPORTS PAGE ===== -->
         <section id="page-reports" class="page-section hidden">
           <div class="reports-header-card card">
             <div class="reports-control">

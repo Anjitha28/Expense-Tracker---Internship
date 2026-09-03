@@ -424,11 +424,16 @@ app.delete('/api/transactions/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Get Recent Transactions (supporting offset & limits, or search filters)
+// Get Recent Transactions (supporting offset, limits, date ranges, or search filters)
 app.get('/api/transactions', authenticateToken, async (req, res) => {
   const limit = parseInt(req.query.limit) || 50;
   const offset = parseInt(req.query.offset) || 0;
   const type = req.query.type; // filter: 'income' or 'expense'
+  const startDate = req.query.start_date;
+  const endDate = req.query.end_date;
+  const exactDate = req.query.date;
+  const search = req.query.search;
+  const categoryId = req.query.category_id;
 
   try {
     let sql = `
@@ -442,8 +447,32 @@ app.get('/api/transactions', authenticateToken, async (req, res) => {
     const params = [req.user.id];
 
     if (type === 'income' || type === 'expense') {
-      sql += ` AND t.type = $2`;
       params.push(type);
+      sql += ` AND t.type = $${params.length}`;
+    }
+
+    if (exactDate) {
+      params.push(exactDate);
+      sql += ` AND t.date = $${params.length}`;
+    } else {
+      if (startDate) {
+        params.push(startDate);
+        sql += ` AND t.date >= $${params.length}`;
+      }
+      if (endDate) {
+        params.push(endDate);
+        sql += ` AND t.date <= $${params.length}`;
+      }
+    }
+
+    if (categoryId && categoryId !== 'all') {
+      params.push(categoryId);
+      sql += ` AND t.category_id = $${params.length}`;
+    }
+
+    if (search && search.trim()) {
+      params.push(`%${search.trim().toLowerCase()}%`);
+      sql += ` AND (LOWER(COALESCE(t.notes, '')) LIKE $${params.length} OR LOWER(c.name) LIKE $${params.length} OR LOWER(COALESCE(s.name, '')) LIKE $${params.length})`;
     }
 
     sql += ` ORDER BY t.date DESC, t.id DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;

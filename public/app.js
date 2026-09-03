@@ -35,7 +35,16 @@ const state = {
   incomeTrends: [],
   expenseTrends: [],
   allTransactions: [],   // cached for smart suggestions & export
-  recurringList: []
+  recurringList: [],
+  calendar: {
+    currentYear: new Date().getFullYear(),
+    currentMonth: new Date().getMonth(),
+    selectedDate: new Date().toISOString().split('T')[0],
+    filterMode: 'month',
+    detailFilter: 'all',
+    txnsMap: {},
+    monthSummary: { income: 0, expense: 0, balance: 0, activeDays: 0 }
+  }
 };
 
 let txnsOffset = 0;
@@ -95,7 +104,7 @@ async function initApp() {
     try {
       await loadInitialData();
       const hash = window.location.hash.replace('#', '') || 'dashboard';
-      navigateTo(['dashboard','income','expense','balance','reports','transactions','recurring','settings'].includes(hash) ? hash : 'dashboard');
+      navigateTo(['dashboard','income','expense','balance','calendar','reports','transactions','recurring','settings'].includes(hash) ? hash : 'dashboard');
     } catch (err) {
       console.error('Init error:', err);
       // Token may be expired
@@ -165,7 +174,7 @@ function navigateTo(pageId) {
     return;
   }
 
-  const pages = ['dashboard','income','expense','balance','reports','transactions','recurring','settings'];
+  const pages = ['dashboard','income','expense','balance','calendar','reports','transactions','recurring','settings'];
   if (!pages.includes(pageId)) pageId = 'dashboard';
 
   document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
@@ -188,6 +197,7 @@ function navigateTo(pageId) {
     income:       { title: 'Income Portfolio',      sub: 'Understand your cash inflows and revenue channels' },
     expense:      { title: 'Expense Analytics',     sub: 'Inspect and control your commercial outflows' },
     balance:      { title: 'Balance Sheet',         sub: 'Monitor your total net worth and savings rate' },
+    calendar:     { title: 'Financial Calendar',    sub: 'Track income, expenses, and daily balances visually' },
     reports:      { title: 'Financial Reports',     sub: 'Compile, analyze, and audit your budget margins' },
     transactions: { title: 'Transactions Ledger',   sub: 'Filter, review, and adjust your financial logs' },
     recurring:    { title: 'Recurring Transactions',sub: 'Manage scheduled income and expense entries' },
@@ -208,6 +218,7 @@ async function loadPageData(pageId) {
       case 'income':       await loadIncomePage();   break;
       case 'expense':      await loadExpensePage();  break;
       case 'balance':      await loadBalancePage();  break;
+      case 'calendar':     await loadCalendarPage(); break;
       case 'reports':      await loadReportsPage();  break;
       case 'transactions': await loadTransactions(true); break;
       case 'recurring':    await loadRecurringPage(); break;
@@ -657,6 +668,9 @@ function setupAllEventListeners() {
     document.getElementById('import-file-input').click();
   });
   document.getElementById('import-file-input').addEventListener('change', importBackupJSON);
+
+  // ── Calendar Event Listeners ──
+  setupCalendarEventListeners();
 }
 
 // ==========================================================================
@@ -1342,7 +1356,605 @@ function renderBalanceCharts(history, savingsPct) {
 }
 
 // ==========================================================================
-// 5. REPORTS PAGE
+// CATEGORY VISUAL SYSTEM
+// ==========================================================================
+function getCategoryMeta(catName, type = 'expense') {
+  const name = (catName || '').toLowerCase().trim();
+  if (name.includes('food') || name.includes('dining') || name.includes('restaurant') || name.includes('bistro') || name.includes('snack') || name.includes('lunch') || name.includes('dinner') || name.includes('breakfast')) {
+    return { icon: 'restaurant', cls: 'cat-badge-food', label: catName || 'Food', color: '#d97706', isEmoji: false };
+  }
+  if (name === 'tea' || name.includes('tea') || name.includes('coffee') || name.includes('chai') || name.includes('cafe')) {
+    return { icon: '☕', cls: 'cat-badge-tea', label: catName || 'Tea', color: '#b45309', isEmoji: true };
+  }
+  if (name.includes('shop') || name.includes('cloth') || name.includes('grocer') || name.includes('market') || name.includes('mall') || name.includes('amazon')) {
+    return { icon: 'shopping_bag', cls: 'cat-badge-shopping', label: catName || 'Shopping', color: '#7c3aed', isEmoji: false };
+  }
+  if (name.includes('transport') || name.includes('fuel') || name.includes('cab') || name.includes('taxi') || name.includes('car') || name.includes('bus') || name.includes('commute') || name.includes('travel') || name.includes('flight')) {
+    return { icon: 'directions_car', cls: 'cat-badge-transport', label: catName || 'Transport', color: '#2563eb', isEmoji: false };
+  }
+  if (name.includes('salary') || name.includes('wage') || name.includes('paycheck') || name.includes('stipend')) {
+    return { icon: 'payments', cls: 'cat-badge-salary', label: catName || 'Salary', color: '#059669', isEmoji: false };
+  }
+  if (name.includes('bill') || name.includes('utilit') || name.includes('electric') || name.includes('water') || name.includes('broadband') || name.includes('wifi') || name.includes('recharge') || name.includes('phone') || name.includes('gas')) {
+    return { icon: 'receipt_long', cls: 'cat-badge-bills', label: catName || 'Bills', color: '#e11d48', isEmoji: false };
+  }
+  if (name.includes('rent') || name.includes('house') || name.includes('home') || name.includes('apart') || name.includes('mortgage') || name.includes('flat')) {
+    return { icon: 'home', cls: 'cat-badge-housing', label: catName || 'Housing', color: '#be123c', isEmoji: false };
+  }
+  if (name.includes('entertain') || name.includes('movie') || name.includes('game') || name.includes('stream') || name.includes('netflix') || name.includes('cinema') || name.includes('music')) {
+    return { icon: 'sports_esports', cls: 'cat-badge-entertainment', label: catName || 'Entertainment', color: '#db2777', isEmoji: false };
+  }
+  if (name.includes('health') || name.includes('medic') || name.includes('doctor') || name.includes('pharm') || name.includes('hospital') || name.includes('gym') || name.includes('fitness')) {
+    return { icon: 'medical_services', cls: 'cat-badge-health', label: catName || 'Health', color: '#0d9488', isEmoji: false };
+  }
+  if (name.includes('edu') || name.includes('course') || name.includes('book') || name.includes('school') || name.includes('college') || name.includes('tuition')) {
+    return { icon: 'school', cls: 'cat-badge-education', label: catName || 'Education', color: '#0891b2', isEmoji: false };
+  }
+  if (name.includes('invest') || name.includes('dividend') || name.includes('stock') || name.includes('crypto') || name.includes('mutual') || name.includes('gold') || name.includes('interest')) {
+    return { icon: 'trending_up', cls: 'cat-badge-investments', label: catName || 'Investment', color: '#4f46e5', isEmoji: false };
+  }
+  if (name.includes('freelance') || name.includes('side') || name.includes('bonus') || name.includes('gift') || name.includes('reward')) {
+    return { icon: 'work', cls: 'cat-badge-income', label: catName || 'Freelance', color: '#059669', isEmoji: false };
+  }
+  if (type === 'income') {
+    return { icon: 'account_balance_wallet', cls: 'cat-badge-income', label: catName || 'Income', color: '#059669', isEmoji: false };
+  }
+  return { icon: 'category', cls: 'cat-badge-default', label: catName || 'Expense', color: '#64748b', isEmoji: false };
+}
+
+// ==========================================================================
+// 5. CALENDAR SECTION
+// ==========================================================================
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+function setupCalendarEventListeners() {
+  // Prev / Next / Today
+  document.getElementById('btn-cal-prev')?.addEventListener('click', () => changeCalendarMonth(-1));
+  document.getElementById('btn-cal-next')?.addEventListener('click', () => changeCalendarMonth(1));
+  document.getElementById('btn-cal-today')?.addEventListener('click', jumpToToday);
+
+  // Filter Mode Tabs (Month / Year / Date)
+  document.getElementById('cal-mode-tabs')?.addEventListener('click', e => {
+    const btn = e.target.closest('.cal-mode-btn');
+    if (!btn) return;
+    document.querySelectorAll('#cal-mode-tabs .cal-mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const mode = btn.dataset.mode;
+    state.calendar.filterMode = mode;
+
+    document.getElementById('cal-month-filters')?.classList.toggle('hidden', mode !== 'month');
+    document.getElementById('cal-year-filters')?.classList.toggle('hidden', mode !== 'year');
+    document.getElementById('cal-date-filters')?.classList.toggle('hidden', mode !== 'date');
+
+    loadCalendarPage();
+  });
+
+  // Month selector change
+  document.getElementById('cal-select-month')?.addEventListener('change', e => {
+    state.calendar.currentMonth = parseInt(e.target.value);
+    loadCalendarPage();
+  });
+
+  // Year selector change
+  document.getElementById('cal-select-year')?.addEventListener('change', e => {
+    state.calendar.currentYear = parseInt(e.target.value);
+    loadCalendarPage();
+  });
+
+  // Year-only selector change
+  document.getElementById('cal-select-year-only')?.addEventListener('change', e => {
+    state.calendar.currentYear = parseInt(e.target.value);
+    loadCalendarPage();
+  });
+
+  // Specific Date input change
+  document.getElementById('cal-input-specific-date')?.addEventListener('change', e => {
+    const val = e.target.value;
+    if (!val) return;
+    const [y, m, d] = val.split('-').map(Number);
+    state.calendar.currentYear = y;
+    state.calendar.currentMonth = m - 1;
+    state.calendar.selectedDate = val;
+    loadCalendarPage();
+  });
+
+  // Add Transaction Buttons
+  document.getElementById('btn-cal-add-txn')?.addEventListener('click', () => {
+    openTxnModal();
+    document.getElementById('txn-date').value = state.calendar.selectedDate || todayISO();
+  });
+
+  document.getElementById('btn-cal-add-to-selected-date')?.addEventListener('click', () => {
+    openTxnModal();
+    document.getElementById('txn-date').value = state.calendar.selectedDate || todayISO();
+  });
+
+  document.getElementById('btn-cal-empty-add')?.addEventListener('click', () => {
+    openTxnModal();
+    document.getElementById('txn-date').value = state.calendar.selectedDate || todayISO();
+  });
+
+  // Date Details Type Tabs (All / Income / Expense)
+  document.getElementById('cal-details-type-tabs')?.addEventListener('click', e => {
+    const btn = e.target.closest('.cal-tab-btn');
+    if (!btn) return;
+    document.querySelectorAll('#cal-details-type-tabs .cal-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.calendar.detailFilter = btn.dataset.tab;
+    renderDateDetails(state.calendar.selectedDate, false);
+  });
+}
+
+function populateCalendarFilterDropdowns() {
+  const monthSel = document.getElementById('cal-select-month');
+  const yearSel = document.getElementById('cal-select-year');
+  const yearOnlySel = document.getElementById('cal-select-year-only');
+  const dateInput = document.getElementById('cal-input-specific-date');
+
+  if (monthSel) monthSel.value = String(state.calendar.currentMonth);
+
+  const currentYr = new Date().getFullYear();
+  const startYr = currentYr - 5;
+  const endYr = currentYr + 2;
+
+  if (yearSel && yearSel.options.length === 0) {
+    yearSel.innerHTML = '';
+    for (let y = startYr; y <= endYr; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      yearSel.appendChild(opt);
+    }
+  }
+  if (yearSel) yearSel.value = String(state.calendar.currentYear);
+
+  if (yearOnlySel && yearOnlySel.options.length === 0) {
+    yearOnlySel.innerHTML = '';
+    for (let y = startYr; y <= endYr; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      yearOnlySel.appendChild(opt);
+    }
+  }
+  if (yearOnlySel) yearOnlySel.value = String(state.calendar.currentYear);
+
+  if (dateInput) {
+    dateInput.value = state.calendar.selectedDate || todayISO();
+  }
+}
+
+async function loadCalendarPage() {
+  populateCalendarFilterDropdowns();
+
+  const { currentYear, currentMonth, filterMode } = state.calendar;
+
+  // Title header text
+  const titleEl = document.getElementById('cal-current-period-title');
+  const gridTitleEl = document.getElementById('cal-grid-month-title');
+  if (filterMode === 'year') {
+    const yrStr = `Year ${currentYear}`;
+    if (titleEl) titleEl.textContent = yrStr;
+    if (gridTitleEl) gridTitleEl.textContent = `All Transactions for ${currentYear}`;
+  } else if (filterMode === 'date') {
+    const dStr = formatDate(state.calendar.selectedDate);
+    if (titleEl) titleEl.textContent = dStr;
+    if (gridTitleEl) gridTitleEl.textContent = `Calendar View – ${MONTH_NAMES[currentMonth]} ${currentYear}`;
+  } else {
+    const mStr = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
+    if (titleEl) titleEl.textContent = mStr;
+    if (gridTitleEl) gridTitleEl.textContent = `Monthly Transactions – ${mStr}`;
+  }
+
+  // Calculate visible range for API query
+  let startDateStr, endDateStr;
+  if (filterMode === 'year') {
+    startDateStr = `${currentYear}-01-01`;
+    endDateStr = `${currentYear}-12-31`;
+  } else {
+    // Cover the month and adjacent leading/trailing days
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+    
+    // 7 days before and after to safely cover grid
+    const queryStart = new Date(firstDayOfMonth);
+    queryStart.setDate(queryStart.getDate() - 7);
+    const queryEnd = new Date(lastDayOfMonth);
+    queryEnd.setDate(queryEnd.getDate() + 7);
+
+    startDateStr = queryStart.toISOString().split('T')[0];
+    endDateStr = queryEnd.toISOString().split('T')[0];
+  }
+
+  // Fetch transactions in range
+  let txns = [];
+  try {
+    txns = await apiFetch(`/api/transactions?start_date=${startDateStr}&end_date=${endDateStr}&limit=1000`);
+  } catch (err) {
+    console.error('Failed to load calendar transactions:', err);
+    showToast('Failed to fetch calendar transactions: ' + err.message, 'error');
+  }
+
+  // Build daily transactions map: { 'YYYY-MM-DD': [txns] }
+  const txnsMap = {};
+  let totalIncome = 0;
+  let totalExpense = 0;
+  const activeDaysSet = new Set();
+
+  txns.forEach(t => {
+    const dStr = String(t.date).split('T')[0];
+    if (!txnsMap[dStr]) txnsMap[dStr] = [];
+    txnsMap[dStr].push(t);
+
+    // Calculate period summaries
+    const amt = parseFloat(t.amount) || 0;
+    const tDate = new Date(t.date);
+    const isInPeriod = (filterMode === 'year') 
+      ? (tDate.getFullYear() === currentYear)
+      : (tDate.getFullYear() === currentYear && tDate.getMonth() === currentMonth);
+
+    if (isInPeriod) {
+      activeDaysSet.add(dStr);
+      if (t.type === 'income') totalIncome += amt;
+      else if (t.type === 'expense') totalExpense += amt;
+    }
+  });
+
+  state.calendar.txnsMap = txnsMap;
+  state.calendar.monthSummary = {
+    income: totalIncome,
+    expense: totalExpense,
+    balance: totalIncome - totalExpense,
+    activeDays: activeDaysSet.size
+  };
+
+  // Update Period KPI Strip
+  document.getElementById('cal-summary-income').textContent = fmt(totalIncome);
+  document.getElementById('cal-summary-expense').textContent = fmt(totalExpense);
+  const balEl = document.getElementById('cal-summary-balance');
+  const net = totalIncome - totalExpense;
+  balEl.textContent = `${net >= 0 ? '+' : ''}${fmt(net)}`;
+  balEl.className = `${net >= 0 ? 'income-color' : 'expense-color'} font-bold`;
+  document.getElementById('cal-summary-days').textContent = `${activeDaysSet.size} days`;
+
+  // Render Grid, Legend, and Date Details
+  renderCalendarGrid();
+  renderCalendarLegend();
+  renderDateDetails(state.calendar.selectedDate, false);
+}
+
+function renderCalendarGrid() {
+  const container = document.getElementById('cal-days-grid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const { currentYear, currentMonth, selectedDate, txnsMap } = state.calendar;
+  const todayStr = todayISO();
+
+  const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sun, 6 = Sat
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+  // Total cells to display (multiple of 7: 35 or 42)
+  const totalCells = (firstDayIndex + daysInMonth <= 35) ? 35 : 42;
+
+  for (let i = 0; i < totalCells; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-day-cell';
+
+    let dayNum, cellMonth, cellYear, isOtherMonth = false;
+
+    if (i < firstDayIndex) {
+      // Prev month trailing days
+      dayNum = daysInPrevMonth - (firstDayIndex - 1 - i);
+      cellMonth = currentMonth - 1;
+      cellYear = currentYear;
+      if (cellMonth < 0) { cellMonth = 11; cellYear--; }
+      isOtherMonth = true;
+    } else if (i < firstDayIndex + daysInMonth) {
+      // Current month days
+      dayNum = i - firstDayIndex + 1;
+      cellMonth = currentMonth;
+      cellYear = currentYear;
+    } else {
+      // Next month leading days
+      dayNum = i - (firstDayIndex + daysInMonth) + 1;
+      cellMonth = currentMonth + 1;
+      cellYear = currentYear;
+      if (cellMonth > 11) { cellMonth = 0; cellYear++; }
+      isOtherMonth = true;
+    }
+
+    // Standard ISO string YYYY-MM-DD
+    const mStr = String(cellMonth + 1).padStart(2, '0');
+    const dStr = String(dayNum).padStart(2, '0');
+    const isoDate = `${cellYear}-${mStr}-${dStr}`;
+
+    cell.dataset.date = isoDate;
+    if (isOtherMonth) cell.classList.add('cal-day-other-month');
+    if (isoDate === todayStr) cell.classList.add('cal-day-today');
+    if (isoDate === selectedDate) cell.classList.add('cal-day-selected');
+
+    // Daily transactions
+    const dayTxns = txnsMap[isoDate] || [];
+    let dayIncome = 0;
+    let dayExpense = 0;
+    dayTxns.forEach(t => {
+      const a = parseFloat(t.amount) || 0;
+      if (t.type === 'income') dayIncome += a;
+      else if (t.type === 'expense') dayExpense += a;
+    });
+    const dayNet = dayIncome - dayExpense;
+
+    // Header top row (Day Number + Net amount/indicator)
+    let netHtml = '';
+    if (dayTxns.length > 0) {
+      if (dayIncome > 0 && dayExpense === 0) {
+        netHtml = `<span class="cal-day-net-mini income-color">+${fmtShort(dayIncome)}</span>`;
+      } else if (dayExpense > 0 && dayIncome === 0) {
+        netHtml = `<span class="cal-day-net-mini expense-color">-${fmtShort(dayExpense)}</span>`;
+      } else {
+        netHtml = `<span class="cal-day-net-mini ${dayNet >= 0 ? 'income-color' : 'expense-color'}">${dayNet >= 0 ? '+' : ''}${fmtShort(dayNet)}</span>`;
+      }
+    }
+
+    let topHtml = `
+      <div class="cal-day-top">
+        <span class="cal-day-num">${dayNum}</span>
+        ${netHtml}
+      </div>
+    `;
+
+    // Chip list inside date box
+    let chipsHtml = `<div class="cal-day-chip-list">`;
+    const maxChips = 2;
+    const visibleTxns = dayTxns.slice(0, maxChips);
+
+    visibleTxns.forEach(t => {
+      const meta = getCategoryMeta(t.category_name, t.type);
+      const isInc = t.type === 'income';
+      const iconHtml = meta.isEmoji
+        ? `<span class="cal-txn-chip-icon">${meta.icon}</span>`
+        : `<span class="material-icons-round cal-txn-chip-icon">${meta.icon}</span>`;
+
+      const sign = isInc ? '+' : '-';
+      const shortAmt = fmtShort(parseFloat(t.amount) || 0);
+
+      chipsHtml += `
+        <div class="cal-txn-chip ${meta.cls}" title="${meta.label}: ${isInc ? '+' : '-'}${fmt(t.amount)} (${t.notes || 'No notes'})">
+          ${iconHtml}
+          <span class="cal-txn-chip-text">${meta.label} ${sign}${shortAmt}</span>
+        </div>
+      `;
+    });
+
+    if (dayTxns.length > maxChips) {
+      chipsHtml += `<div class="cal-txn-more-badge">+${dayTxns.length - maxChips} more</div>`;
+    }
+    chipsHtml += `</div>`;
+
+    cell.innerHTML = topHtml + chipsHtml;
+
+    // Cell Click
+    cell.addEventListener('click', () => {
+      selectCalendarDate(isoDate, true);
+    });
+
+    container.appendChild(cell);
+  }
+}
+
+function selectCalendarDate(isoDate, shouldScrollMobile = true) {
+  state.calendar.selectedDate = isoDate;
+
+  // Update selected class on day cells
+  document.querySelectorAll('#cal-days-grid .cal-day-cell').forEach(c => {
+    c.classList.toggle('cal-day-selected', c.dataset.date === isoDate);
+  });
+
+  // Update specific date input if visible
+  const specificInput = document.getElementById('cal-input-specific-date');
+  if (specificInput) specificInput.value = isoDate;
+
+  // Render Date Details
+  renderDateDetails(isoDate);
+
+  // Smooth scroll on mobile/tablet viewports (< 1024px)
+  if (shouldScrollMobile && window.innerWidth <= 1024) {
+    const detailsPanel = document.getElementById('calendar-date-details-panel');
+    if (detailsPanel) {
+      detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
+
+function renderDateDetails(isoDate, animate = false) {
+  const dateObj = new Date(isoDate + 'T00:00:00');
+  const formattedDate = dateObj.toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+
+  document.getElementById('cal-details-date-title').textContent = formattedDate;
+
+  const allTxns = state.calendar.txnsMap[isoDate] || [];
+  const incomeTxns = allTxns.filter(t => t.type === 'income');
+  const expenseTxns = allTxns.filter(t => t.type === 'expense');
+
+  let dayIncome = 0;
+  let dayExpense = 0;
+  allTxns.forEach(t => {
+    const a = parseFloat(t.amount) || 0;
+    if (t.type === 'income') dayIncome += a;
+    else if (t.type === 'expense') dayExpense += a;
+  });
+  const dayNet = dayIncome - dayExpense;
+
+  // Summary stats pills
+  document.getElementById('cal-detail-income-sum').textContent = fmt(dayIncome);
+  document.getElementById('cal-detail-expense-sum').textContent = fmt(dayExpense);
+  const netEl = document.getElementById('cal-detail-net-sum');
+  netEl.textContent = `${dayNet >= 0 ? '+' : ''}${fmt(dayNet)}`;
+  netEl.className = `stat-pill-val ${dayNet >= 0 ? 'balance-color' : 'expense-color'}`;
+
+  // Tab counts
+  document.getElementById('cal-count-all').textContent = allTxns.length;
+  document.getElementById('cal-count-income').textContent = incomeTxns.length;
+  document.getElementById('cal-count-expense').textContent = expenseTxns.length;
+  document.getElementById('cal-badge-income-count').textContent = `${incomeTxns.length} items`;
+  document.getElementById('cal-badge-expense-count').textContent = `${expenseTxns.length} items`;
+
+  const emptyEl = document.getElementById('cal-details-empty');
+  const incSection = document.getElementById('cal-details-income-section');
+  const expSection = document.getElementById('cal-details-expense-section');
+  const incList = document.getElementById('cal-details-income-list');
+  const expList = document.getElementById('cal-details-expense-list');
+
+  incList.innerHTML = '';
+  expList.innerHTML = '';
+
+  if (!allTxns.length) {
+    emptyEl.classList.remove('hidden');
+    incSection.classList.add('hidden');
+    expSection.classList.add('hidden');
+    return;
+  }
+
+  emptyEl.classList.add('hidden');
+
+  const filter = state.calendar.detailFilter || 'all';
+
+  // Render Income list
+  if (filter === 'expense' || incomeTxns.length === 0) {
+    incSection.classList.add('hidden');
+  } else {
+    incSection.classList.remove('hidden');
+    incomeTxns.forEach(t => incList.appendChild(createCalendarTxnCard(t)));
+  }
+
+  // Render Expense list
+  if (filter === 'income' || expenseTxns.length === 0) {
+    expSection.classList.add('hidden');
+  } else {
+    expSection.classList.remove('hidden');
+    expenseTxns.forEach(t => expList.appendChild(createCalendarTxnCard(t)));
+  }
+}
+
+function createCalendarTxnCard(t) {
+  const isInc = t.type === 'income';
+  const meta = getCategoryMeta(t.category_name, t.type);
+
+  const card = document.createElement('div');
+  card.className = 'cal-txn-item';
+
+  const iconHtml = meta.isEmoji
+    ? `<span style="font-size:17px;line-height:1">${meta.icon}</span>`
+    : `<span class="material-icons-round" style="font-size:18px!important">${meta.icon}</span>`;
+
+  card.innerHTML = `
+    <div class="cal-txn-left">
+      <div class="cal-txn-icon-badge ${meta.cls}">
+        ${iconHtml}
+      </div>
+      <div class="cal-txn-info">
+        <div class="cal-txn-title-row">
+          <span class="cal-txn-title">${meta.label}</span>
+          ${t.subcategory_name ? `<span class="cal-txn-sub">· ${t.subcategory_name}</span>` : ''}
+        </div>
+        ${t.notes ? `<span class="cal-txn-notes" title="${t.notes}">${t.notes}</span>` : ''}
+        <div class="flex-row align-center gap-2 mt-1">
+          <span class="cal-txn-mode-tag">${t.payment_mode_name || 'Cash'}</span>
+        </div>
+      </div>
+    </div>
+    <div class="cal-txn-right">
+      <span class="cal-txn-amount ${isInc ? 'income-color' : 'expense-color'}">
+        ${isInc ? '+' : '-'}${fmt(t.amount)}
+      </span>
+      <div class="cal-txn-actions">
+        <button onclick="editTransaction(${t.id})" class="table-action-btn btn-edit" title="Edit Entry">
+          <span class="material-icons-round" style="font-size:15px!important">edit</span>
+        </button>
+        <button onclick="deleteTransaction(${t.id})" class="table-action-btn btn-delete" title="Delete Entry">
+          <span class="material-icons-round" style="font-size:15px!important">delete</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  return card;
+}
+
+function renderCalendarLegend() {
+  const container = document.getElementById('cal-legend-items');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const legendCategories = [
+    { name: 'Salary', type: 'income' },
+    { name: 'Freelance', type: 'income' },
+    { name: 'Food', type: 'expense' },
+    { name: 'Tea', type: 'expense' },
+    { name: 'Shopping', type: 'expense' },
+    { name: 'Transport', type: 'expense' },
+    { name: 'Bills', type: 'expense' },
+    { name: 'Entertainment', type: 'expense' },
+    { name: 'Health', type: 'expense' },
+    { name: 'Education', type: 'expense' },
+    { name: 'Investments', type: 'income' }
+  ];
+
+  legendCategories.forEach(item => {
+    const meta = getCategoryMeta(item.name, item.type);
+    const chip = document.createElement('div');
+    chip.className = `cal-legend-chip ${meta.cls}`;
+    const iconHtml = meta.isEmoji
+      ? `<span style="font-size:12px;line-height:1">${meta.icon}</span>`
+      : `<span class="material-icons-round" style="font-size:13px!important">${meta.icon}</span>`;
+    chip.innerHTML = `${iconHtml}<span>${meta.label}</span>`;
+    container.appendChild(chip);
+  });
+}
+
+function changeCalendarMonth(delta) {
+  let { currentYear, currentMonth } = state.calendar;
+  currentMonth += delta;
+  if (currentMonth < 0) {
+    currentMonth = 11;
+    currentYear--;
+  } else if (currentMonth > 11) {
+    currentMonth = 0;
+    currentYear++;
+  }
+  state.calendar.currentMonth = currentMonth;
+  state.calendar.currentYear = currentYear;
+  
+  // Set selected date to 1st of that month
+  const mStr = String(currentMonth + 1).padStart(2, '0');
+  state.calendar.selectedDate = `${currentYear}-${mStr}-01`;
+
+  loadCalendarPage();
+}
+
+function jumpToToday() {
+  const today = new Date();
+  state.calendar.currentYear = today.getFullYear();
+  state.calendar.currentMonth = today.getMonth();
+  state.calendar.selectedDate = todayISO();
+  loadCalendarPage();
+}
+
+window.selectCalendarDate = selectCalendarDate;
+
+// ==========================================================================
+// 6. REPORTS PAGE
 // ==========================================================================
 async function loadReportsPage() {
   const period = state.reportsPeriod;
