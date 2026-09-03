@@ -1639,7 +1639,7 @@ function renderCalendarGrid() {
 
     // Symbol badges list inside date box
     let chipsHtml = `<div class="cal-day-symbols-list">`;
-    const maxSymbols = 3;
+    const maxSymbols = dayTxns.length <= 4 ? 4 : 3;
     const visibleTxns = dayTxns.slice(0, maxSymbols);
 
     visibleTxns.forEach(t => {
