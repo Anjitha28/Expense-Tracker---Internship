@@ -1650,7 +1650,7 @@ function renderCalendarGrid() {
         : `<span class="material-icons-round cal-symbol-icon">${meta.icon}</span>`;
 
       chipsHtml += `
-        <div class="cal-symbol-badge ${meta.cls}" title="${meta.label}: ${isInc ? '+' : '-'}${fmt(t.amount)}${t.notes ? ' (' + t.notes + ')' : ''}">
+        <div class="cal-symbol-badge ${isInc ? 'cal-symbol-income' : 'cal-symbol-expense'}" title="${meta.label}: ${isInc ? '+' : '-'}${fmt(t.amount)}${t.notes ? ' (' + t.notes + ')' : ''}">
           ${iconHtml}
         </div>
       `;

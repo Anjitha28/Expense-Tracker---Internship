@@ -2684,6 +2684,30 @@ html, body {
   line-height: 1;
 }
 
+.cal-symbol-badge.cal-symbol-income {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+}
+
+[data-theme="dark"] .cal-symbol-badge.cal-symbol-income {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+}
+
+.cal-symbol-badge.cal-symbol-expense {
+  background: #ffe4e6;
+  border: 1px solid #fecdd3;
+  color: #be123c;
+}
+
+[data-theme="dark"] .cal-symbol-badge.cal-symbol-expense {
+  background: rgba(225, 29, 72, 0.22);
+  border-color: rgba(225, 29, 72, 0.4);
+  color: #fda4af;
+}
+
 .cal-symbol-more-badge {
   height: 26px;
   padding: 0 7px;
