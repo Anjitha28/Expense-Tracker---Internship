@@ -2645,15 +2645,17 @@ html, body {
 .cal-days-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 .cal-day-cell {
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
   min-height: 98px;
-  padding: 6px 6px;
+  padding: 8px 8px;
   display: flex;
   flex-direction: column;
   cursor: pointer;
@@ -2664,20 +2666,17 @@ html, body {
 }
 
 .cal-day-cell:hover {
-  transform: translateY(-2px);
-  border-color: var(--balance);
-  box-shadow: var(--shadow-md);
+  background: var(--bg-hover);
   z-index: 2;
 }
 
 .cal-day-cell.cal-day-other-month {
-  opacity: 0.38;
+  opacity: 0.55;
   background: var(--bg-input);
 }
 
 .cal-day-cell.cal-day-today {
-  border: 1.5px solid var(--balance);
-  background: rgba(14, 165, 233, 0.05);
+  background: rgba(14, 165, 233, 0.07);
 }
 
 .cal-day-cell.cal-day-today .cal-day-num {
@@ -2692,10 +2691,11 @@ html, body {
 }
 
 .cal-day-cell.cal-day-selected {
-  border: 2px solid var(--balance);
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25), var(--shadow-md);
+  outline: 2px solid var(--balance);
+  outline-offset: -2px;
   background: var(--bg-card);
   z-index: 3;
+  box-shadow: inset 0 0 0 1px var(--balance);
 }
 
 .cal-day-top {
@@ -2726,13 +2726,14 @@ html, body {
   gap: 3px;
   flex: 1;
   overflow: hidden;
+  margin-top: 2px;
 }
 
 .cal-txn-chip {
   display: flex;
   align-items: center;
   gap: 3px;
-  padding: 2px 4px;
+  padding: 2px 5px;
   border-radius: 5px;
   font-size: 10.5px;
   font-weight: 600;
@@ -3067,35 +3068,46 @@ html, body {
 }
 
 .cal-txn-item {
-  background: var(--bg-input);
+  background: var(--bg-card);
   border: 1px solid var(--border);
+  border-left: 4px solid var(--balance);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.cal-txn-item.type-income {
+  border-left-color: var(--income);
+}
+
+.cal-txn-item.type-expense {
+  border-left-color: var(--expense);
 }
 
 .cal-txn-item:hover {
   border-color: var(--border-focus);
-  background: var(--bg-card);
-  box-shadow: var(--shadow-sm);
+  border-left-color: inherit;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .cal-txn-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
   flex: 1;
 }
 
 .cal-txn-icon-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3107,7 +3119,16 @@ html, body {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  gap: 1px;
+  gap: 2px;
+}
+
+.cal-txn-type-tag {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  line-height: 1;
+  margin-bottom: 1px;
 }
 
 .cal-txn-title-row {
@@ -3118,19 +3139,24 @@ html, body {
 
 .cal-txn-title {
   font-weight: 700;
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.cal-txn-sub {
+.cal-txn-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11.5px;
   color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.cal-txn-sub {
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .cal-txn-notes {
@@ -3146,23 +3172,24 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .cal-txn-amount {
   font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 14.5px;
+  font-weight: 800;
+  font-size: 15px;
   line-height: 1;
 }
 
 .cal-txn-mode-tag {
   font-size: 10px;
-  padding: 1px 6px;
+  padding: 2px 6px;
   border-radius: 4px;
   background: var(--bg-hover);
   color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .cal-txn-actions {

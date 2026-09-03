@@ -1774,14 +1774,14 @@ function selectCalendarDate(isoDate, shouldScrollMobile = true) {
 
 function renderDateDetails(isoDate, animate = false) {
   const dateObj = new Date(isoDate + 'T00:00:00');
-  const formattedDate = dateObj.toLocaleDateString('en-IN', {
-    weekday: 'long',
-    day: 'numeric',
+  const formattedDate = dateObj.toLocaleDateString('en-US', {
+    weekday: 'short',
     month: 'short',
+    day: 'numeric',
     year: 'numeric'
   });
 
-  document.getElementById('cal-details-date-title').textContent = formattedDate;
+  document.getElementById('cal-details-date-title').textContent = `Transactions on ${formattedDate}`;
 
   const allTxns = state.calendar.txnsMap[isoDate] || [];
   const incomeTxns = allTxns.filter(t => t.type === 'income');
@@ -1852,11 +1852,11 @@ function createCalendarTxnCard(t) {
   const meta = getCategoryMeta(t.category_name, t.type);
 
   const card = document.createElement('div');
-  card.className = 'cal-txn-item';
+  card.className = `cal-txn-item ${isInc ? 'type-income' : 'type-expense'}`;
 
   const iconHtml = meta.isEmoji
-    ? `<span style="font-size:17px;line-height:1">${meta.icon}</span>`
-    : `<span class="material-icons-round" style="font-size:18px!important">${meta.icon}</span>`;
+    ? `<span style="font-size:16px;line-height:1">${meta.icon}</span>`
+    : `<span class="material-icons-round" style="font-size:17px!important">${meta.icon}</span>`;
 
   card.innerHTML = `
     <div class="cal-txn-left">
@@ -1864,12 +1864,14 @@ function createCalendarTxnCard(t) {
         ${iconHtml}
       </div>
       <div class="cal-txn-info">
-        <div class="cal-txn-title-row">
-          <span class="cal-txn-title">${meta.label}</span>
-          ${t.subcategory_name ? `<span class="cal-txn-sub">· ${t.subcategory_name}</span>` : ''}
+        <div class="cal-txn-type-tag ${isInc ? 'income-color' : 'expense-color'}">
+          ${t.type.toUpperCase()} · ${meta.label.toUpperCase()}
         </div>
-        ${t.notes ? `<span class="cal-txn-notes" title="${t.notes}">${t.notes}</span>` : ''}
-        <div class="flex-row align-center gap-2 mt-1">
+        <div class="cal-txn-title-row">
+          <span class="cal-txn-title">${t.notes || meta.label}</span>
+        </div>
+        <div class="cal-txn-meta-row">
+          ${t.subcategory_name ? `<span class="cal-txn-sub">${t.subcategory_name}</span> · ` : ''}
           <span class="cal-txn-mode-tag">${t.payment_mode_name || 'Cash'}</span>
         </div>
       </div>
