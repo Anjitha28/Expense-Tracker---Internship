@@ -2646,64 +2646,62 @@ html, body {
   color: #dc2626;
 }
 
-/* Transaction chips inside cells */
-.cal-day-chip-list {
+/* Category Symbol Badges inside cells */
+.cal-day-symbols-list {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  overflow: hidden;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
 }
 
-.cal-txn-chip {
+.cal-symbol-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2.5px 7px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.25;
-  width: fit-content;
-  max-width: 100%;
+  justify-content: center;
   border: 1px solid transparent;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: transform var(--transition-fast);
-}
-
-.cal-txn-chip:hover {
-  transform: scale(1.02);
-}
-
-.cal-txn-chip-icon {
-  font-size: 13px !important;
-  line-height: 1;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  cursor: pointer;
   flex-shrink: 0;
 }
 
-.cal-txn-chip-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.cal-symbol-badge:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  z-index: 2;
 }
 
-.cal-txn-more-badge {
-  font-size: 10.5px;
-  font-weight: 700;
+.cal-symbol-icon {
+  font-size: 16px !important;
+  line-height: 1;
+}
+
+.cal-symbol-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.cal-symbol-more-badge {
+  height: 26px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 800;
   color: #475569;
   background: #f1f5f9;
-  border-radius: 6px;
-  padding: 2px 7px;
-  text-align: center;
-  align-self: flex-start;
-  margin-top: 1px;
+  border: 1px solid #e2e8f0;
 }
 
-[data-theme="dark"] .cal-txn-more-badge {
+[data-theme="dark"] .cal-symbol-more-badge {
   background: rgba(255, 255, 255, 0.1);
   color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Category Color System */

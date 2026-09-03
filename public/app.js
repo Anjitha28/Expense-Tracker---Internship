@@ -1637,31 +1637,27 @@ function renderCalendarGrid() {
       </div>
     `;
 
-    // Chip list inside date box
-    let chipsHtml = `<div class="cal-day-chip-list">`;
-    const maxChips = 2;
-    const visibleTxns = dayTxns.slice(0, maxChips);
+    // Symbol badges list inside date box
+    let chipsHtml = `<div class="cal-day-symbols-list">`;
+    const maxSymbols = 3;
+    const visibleTxns = dayTxns.slice(0, maxSymbols);
 
     visibleTxns.forEach(t => {
       const meta = getCategoryMeta(t.category_name, t.type);
       const isInc = t.type === 'income';
       const iconHtml = meta.isEmoji
-        ? `<span class="cal-txn-chip-icon">${meta.icon}</span>`
-        : `<span class="material-icons-round cal-txn-chip-icon">${meta.icon}</span>`;
-
-      const sign = isInc ? '+' : '-';
-      const shortAmt = fmtShort(parseFloat(t.amount) || 0);
+        ? `<span class="cal-symbol-emoji">${meta.icon}</span>`
+        : `<span class="material-icons-round cal-symbol-icon">${meta.icon}</span>`;
 
       chipsHtml += `
-        <div class="cal-txn-chip ${meta.cls}" title="${meta.label}: ${isInc ? '+' : '-'}${fmt(t.amount)} (${t.notes || 'No notes'})">
+        <div class="cal-symbol-badge ${meta.cls}" title="${meta.label}: ${isInc ? '+' : '-'}${fmt(t.amount)}${t.notes ? ' (' + t.notes + ')' : ''}">
           ${iconHtml}
-          <span class="cal-txn-chip-text">${meta.label} ${sign}${shortAmt}</span>
         </div>
       `;
     });
 
-    if (dayTxns.length > maxChips) {
-      chipsHtml += `<div class="cal-txn-more-badge">+${dayTxns.length - maxChips} more</div>`;
+    if (dayTxns.length > maxSymbols) {
+      chipsHtml += `<div class="cal-symbol-more-badge">+${dayTxns.length - maxSymbols}</div>`;
     }
     chipsHtml += `</div>`;
 
